@@ -111,7 +111,7 @@ void Getopt(napi_env env, napi_func_cb_info info) {
   // check if the function succeeds
   if (nn_getsockopt(s, level, option, &optval, &optsize) == 0) {
     napi_value ret = napi_create_number(env, optval);
-    napi_set_return_value(env, info, optval);
+    napi_set_return_value(env, info, ret);
   }
 }
 
@@ -155,10 +155,8 @@ void Bind(napi_env env, napi_func_cb_info info) {
   int s = napi_get_value_int64(env, args[0]);
   char addr[1024];
   int remain = napi_get_string_from_value(env, args[1], addr, 1024);
-  int length = napi_get_string_utf8_length(env, args[1]);
-
   napi_value ret = napi_create_number(env, nn_bind(s, addr));
-  napi_set_return_value(env, ret);
+  napi_set_return_value(env, info, ret);
 }
 
 // NAN_METHOD(Connect) {
@@ -174,11 +172,10 @@ void Connect(napi_env env, napi_func_cb_info info) {
 
   int s = napi_get_value_int64(env, args[0]);
   char addr[1024];
-  int remain = napi_get_string_from_value(env, args[1], addr, 1024);
-  int length = napi_get_string_utf8_length(env, args[1]);
+  napi_get_string_from_value(env, args[1], addr, 1024);
 
   napi_value ret = napi_create_number(env, nn_connect(s, addr));
-  napi_set_return_value(env, ret);
+  napi_set_return_value(env, info, ret);
 }
 
 // NAN_METHOD(Shutdown) {
@@ -195,8 +192,8 @@ void Shutdown(napi_env env, napi_func_cb_info info) {
   int s = napi_get_value_int64(env, args[0]);
   int how = napi_get_value_int64(env, args[1]);
 
-  napi_value ret = napi_create_number(env, nn_shutdown(s, addr));
-  napi_set_return_value(env, ret);
+  napi_value ret = napi_create_number(env, nn_shutdown(s, how));
+  napi_set_return_value(env, info, ret);
 }
 
 // NAN_METHOD(Send) {
@@ -220,17 +217,18 @@ void Send(napi_env env, napi_func_cb_info info) {
   int s = napi_get_value_int64(env, args[0]);
   int flags = napi_get_value_int64(env, args[2]);
 
-  if (napi_buffer_has_instance(info[1])) {
-    int result = nn_send(s, napi_buffer_data(args[1], napi_buffer_length(args[1]), flags);
+  if (napi_buffer_has_instance(env, args[1])) {
+    int result = nn_send(s, napi_buffer_data(env, args[1]),
+                         napi_buffer_length(env, args[1]), flags);
     napi_value ret = napi_create_number(env, result);
-    napi_set_return_value(env, ret);
+    napi_set_return_value(env, info, ret);
   } else {
     char str[1024];
     int remain = napi_get_string_from_value(env, args[1], str, 1024);
     int length = napi_get_string_utf8_length(env, args[1]);
     int result = nn_send(s, str, length, flags);
     napi_value ret = napi_create_number(env, result);
-    napi_set_return_value(env, ret);
+    napi_set_return_value(env, info, ret);
   }
 }
 
@@ -267,9 +265,9 @@ void Recv(napi_env env, napi_func_cb_info info) {
 
   if (len > -1) {
     napi_value h = napi_buffer_copy(env, buf, len);
-    napi_set_return_value(env, h);
+    napi_set_return_value(env, info, h);
   } else {
-    napi_set_return_value(env, napi_create_number(env, len));
+    napi_set_return_value(env, info, napi_create_number(env, len));
   }
 }
 
@@ -306,20 +304,20 @@ void SymbolInfo(napi_env env, napi_func_cb_info info) {
 
   if (ret > 0) {
     napi_value obj = napi_create_object(env);
-    napi_set_property(env, obj, napi_property_name("value"), 
-                      napi_create_number(prop.value));
-    napi_set_property(env, obj, napi_property_name("ns"), 
-                      napi_create_number(prop.ns));
-    napi_set_property(env, obj, napi_property_name("type"), 
-                      napi_create_number(prop.type));
-    napi_set_property(env, obj, napi_property_name("unit"), 
-                      napi_create_number(prop.unit));
-    napi_set_property(env, obj, napi_property_name("name"), 
-                      napi_create_number(prop.name));
+    napi_set_property(env, obj, napi_property_name(env, "value"), 
+                      napi_create_number(env, prop.value));
+    napi_set_property(env, obj, napi_property_name(env, "ns"), 
+                      napi_create_number(env, prop.ns));
+    napi_set_property(env, obj, napi_property_name(env, "type"), 
+                      napi_create_number(env, prop.type));
+    napi_set_property(env, obj, napi_property_name(env, "unit"), 
+                      napi_create_number(env, prop.unit));
+    napi_set_property(env, obj, napi_property_name(env, "name"), 
+                      napi_create_string(env, prop.name));
 
-    napi_set_return_value(env, obj);
+    napi_set_return_value(env, info, obj);
   } else if (ret != 0) {
-    napi_throw_error(env, nn_strerror(nn_errno()));
+    napi_throw_error(env, (char*) nn_strerror(nn_errno()));
   }
 }
 
@@ -351,17 +349,17 @@ void Symbol(napi_env env, napi_func_cb_info info) {
   const char* ret = nn_symbol(s, &val);
 
   if (ret) {
-    napi_value obj = napi_create_object();
-    napi_set_property(env, obj, napi_property_name("value"),
-                      napi_create_number(val));
-    napi_set_property(env, obj, napi_property_name("name"),
-                      napi_create_string(ret));
-    napi_set_return_value(obj);
+    napi_value obj = napi_create_object(env);
+    napi_set_property(env, obj, napi_property_name(env, "value"),
+                      napi_create_number(env, val));
+    napi_set_property(env, obj, napi_property_name(env, "name"),
+                      napi_create_string(env, ret));
+    napi_set_return_value(env, info, obj);
   } else {
     // symbol index out of range
     // this behaviour seems inconsistent with SymbolInfo() above
     // but we are faithfully following the libnanomsg API, warta and all
-    napi_throw_error(env, nn_strerror(nn_errno()));  // EINVAL
+    napi_throw_error(env, (char*) nn_strerror(nn_errno()));  // EINVAL
   }
 }
 
@@ -378,7 +376,7 @@ void Term(napi_env env, napi_func_cb_info info) {
 
 //   // nn_device only returns when it encounters an error
 //   nn_device(s1, s2);
-//   Nan::ThrowError(nn_strerror(nn_errno()));
+//   Nan::ThrowError(nkkn_strerror(nn_errno()));
 // }
 
 // Pass in two sockets, or (socket, -1) or (-1, socket) for loopback
@@ -391,13 +389,13 @@ void Device(napi_env env, napi_func_cb_info info) {
 
   // nn_device only returns when it encounters an error
   nn_device(s1, s2);
-  napi_throw_error(env, nn_strerror(nn_errno()));
+  napi_throw_error(env, (char*) nn_strerror(nn_errno()));
 }
 
 // NAN_METHOD(Errno) { info.GetReturnValue().Set(Nan::New<Number>(nn_errno())); }
 
 void Errno(napi_env env, napi_func_cb_info info) {
-  napi_set_return_value(env, napi_create_number(nn_errno()));
+  napi_set_return_value(env, info, napi_create_number(env, nn_errno()));
 }
 
 // NAN_METHOD(Err) {
@@ -405,7 +403,9 @@ void Errno(napi_env env, napi_func_cb_info info) {
 // }
 
 void Err(napi_env env, napi_func_cb_info info) {
-  napi_set_return_value(env, napi_create_string(nn_strerror(nn_errno())));
+  napi_set_return_value(env, info,
+                        napi_create_string(env,
+                        (char*) nn_strerror(nn_errno())));
 }
 
 // typedef struct nanomsg_socket_s {
@@ -417,7 +417,7 @@ void Err(napi_env env, napi_func_cb_info info) {
 typedef struct nanomsg_socket_s {
   uv_poll_t poll_handle;
   uv_os_sock_t sockfd;
-  napi_callback *callback;
+  Napi::Callback *callback;
 } nanomsg_socket_t;
 
 // void NanomsgReadable(uv_poll_t *req, int status, int events) {
@@ -439,8 +439,8 @@ void NanomsgReadable(uv_poll_t *req, int status, int events) {
   context = reinterpret_cast<nanomsg_socket_t *>(req);
 
   if (events & UV_READABLE) {
-    napi_value argv[] = { napi_create_number(events) };
-    napi_call_function(context->callback, 1, argv);
+    napi_value argv[] = { napi_create_number(env, events) };
+    context->callback->Call(napi_get_global_scope(env), 1, argv);
   }
 }
 
@@ -469,7 +469,7 @@ NAPI_METHOD(PollSendSocket) {
   napi_get_cb_args(env, info, args, 2);
 
   int s = napi_get_value_int64(env, args[0]);
-  napi_callback cb = napi_create_function(env, args[1]);
+  Napi::Callback* callback = new Napi::Callback(args[1]);
 
   nanomsg_socket_t *context;
   size_t siz = sizeof(uv_os_sock_t);
@@ -483,7 +483,7 @@ NAPI_METHOD(PollSendSocket) {
     uv_poll_init_socket(uv_default_loop(), &context->poll_handle,
                         context->sockfd);
     uv_poll_start(&context->poll_handle, UV_READABLE, NanomsgReadable);
-    napi_set_return_value(env, WrapPointer(context, 8));
+    napi_set_return_value(env, info, WrapPointer(context, 8));
   }
 }
 
@@ -512,7 +512,7 @@ NAPI_METHOD(PollReceiveSocket) {
   napi_get_cb_args(env, info, args, 2);
 
   int s = napi_get_value_int64(env, args[0]);
-  napi_callback cb = napi_create_function(env, args[1]);
+  Napi::Callback* callback = new Napi::Callback(args[1]);
 
   nanomsg_socket_t *context;
   size_t siz = sizeof(uv_os_sock_t);
@@ -526,7 +526,7 @@ NAPI_METHOD(PollReceiveSocket) {
     uv_poll_init_socket(uv_default_loop(), &context->poll_handle,
                         context->sockfd);
     uv_poll_start(&context->poll_handle, UV_READABLE, NanomsgReadable);
-    napi_set_return_value(env, WrapPointer(context, 8));
+    napi_set_return_value(env, info, WrapPointer(context, 8));
   }
 }
 
@@ -542,7 +542,7 @@ NAPI_METHOD(PollStop) {
 
   nanomsg_socket_t *context = UnwrapPointer<nanomsg_socket_t *>(args[0]);
   int r = uv_poll_stop(&context->poll_handle);
-  napi_set_return_value(env, napi_create_number(r));
+  napi_set_return_value(env, info, napi_create_number(env, r));
 }
 
 // class NanomsgDeviceWorker : public Nan::AsyncWorker {
@@ -578,10 +578,10 @@ NAPI_METHOD(PollStop) {
 //   int err;
 // };
 
-class NanomsgDeviceWorker : public AsyncWorker {
+class NanomsgDeviceWorker : public Napi::AsyncWorker {
 public:
-  NanomsgDeviceWorker(napi_callback *callback, int s1, int s2)
-      : AsyncWorker(callback), s1(s1), s2(s2) {}
+  NanomsgDeviceWorker(Napi::Callback *callback, int s1, int s2)
+      : Napi::AsyncWorker(callback), s1(s1), s2(s2) {}
   ~NanomsgDeviceWorker() {}
 
   // Executed inside the worker-thread.
@@ -600,9 +600,9 @@ public:
   void HandleOKCallback() {
     napi_env env = napi_get_current_env();
 
-    napi_value argv[] = { napi_create_number(err) };
+    napi_value argv[] = { napi_create_number(env, err) };
 
-    napi_call_function(env, callback, 1, argv);
+    callback->Call(napi_get_global_scope(env), 1, argv);
   };
 
 private:
@@ -628,9 +628,9 @@ NAPI_METHOD(DeviceWorker) {
   int s1 = napi_get_value_int64(env, args[0]);
   int s2 = napi_get_value_int64(env, args[1]);
 
-  napi_callback *callback = napi_create_function(args[2]);
+  Napi::Callback* callback = new Napi::Callback(args[2]);
 
-  AsyncQueueWorker(new NanomsgDeviceWorker(callback, s1, s2));
+  Napi::AsyncQueueWorker(new NanomsgDeviceWorker(callback, s1, s2));
 }
 
 // #define EXPORT_METHOD(C, S)                                                    \
@@ -638,61 +638,60 @@ NAPI_METHOD(DeviceWorker) {
 //            Nan::GetFunction(Nan::New<FunctionTemplate>(S)).ToLocalChecked());
 
 void InitAll(napi_env env, napi_value exports, napi_value module) {
-  napi_env env = napi_get_current_env();
   napi_set_property(env, exports,
-                        napi_property_name(env, "Socket"),
-                        napi_create_function(env, Socket));
+                    napi_property_name(env, "Socket"),
+                    napi_create_function(env, Socket));
   napi_set_property(env, exports,
-                        napi_property_name(env, "Close"),
-                        napi_create_function(env, Socket));
+                    napi_property_name(env, "Close"),
+                    napi_create_function(env, Socket));
   napi_set_property(env, exports,
-                        napi_property_name(env, "Chan"),
-                        napi_create_function(env, Socket));
+                    napi_property_name(env, "Chan"),
+                    napi_create_function(env, Socket));
   napi_set_property(env, exports,
-                        napi_property_name(env, "Bind"),
-                        napi_create_function(env, Socket));
+                    napi_property_name(env, "Bind"),
+                    napi_create_function(env, Socket));
   napi_set_property(env, exports,
-                        napi_property_name(env, "Connect"),
-                        napi_create_function(env, Socket));
+                    napi_property_name(env, "Connect"),
+                    napi_create_function(env, Socket));
   napi_set_property(env, exports,
-                        napi_property_name(env, "Shutdown"),
-                        napi_create_function(env, Socket));
+                    napi_property_name(env, "Shutdown"),
+                    napi_create_function(env, Socket));
   napi_set_property(env, exports,
-                        napi_property_name(env, "Send"),
-                        napi_create_function(env, Socket));
+                    napi_property_name(env, "Send"),
+                    napi_create_function(env, Socket));
   napi_set_property(env, exports,
-                        napi_property_name(env, "Recv"),
-                        napi_create_function(env, Socket));
+                    napi_property_name(env, "Recv"),
+                    napi_create_function(env, Socket));
   napi_set_property(env, exports,
-                        napi_property_name(env, "Errno"),
-                        napi_create_function(env, Socket));
+                    napi_property_name(env, "Errno"),
+                    napi_create_function(env, Socket));
   napi_set_property(env, exports,
-                        napi_property_name(env, "PollSendSocket"),
-                        napi_create_function(env, Socket));
+                    napi_property_name(env, "PollSendSocket"),
+                    napi_create_function(env, Socket));
   napi_set_property(env, exports,
-                        napi_property_name(env, "PollReceiveSocket"),
-                        napi_create_function(env, Socket));
+                    napi_property_name(env, "PollReceiveSocket"),
+                    napi_create_function(env, Socket));
   napi_set_property(env, exports,
-                        napi_property_name(env, "DeviceWorker"),
-                        napi_create_function(env, Socket));
+                    napi_property_name(env, "DeviceWorker"),
+                    napi_create_function(env, Socket));
   napi_set_property(env, exports,
-                        napi_property_name(env, "SymbolInfo"),
-                        napi_create_function(env, Socket));
+                    napi_property_name(env, "SymbolInfo"),
+                    napi_create_function(env, Socket));
   napi_set_property(env, exports,
-                        napi_property_name(env, "Symbol"),
-                        napi_create_function(env, Socket));
+                    napi_property_name(env, "Symbol"),
+                    napi_create_function(env, Socket));
   napi_set_property(env, exports,
-                        napi_property_name(env, "Term"),
-                        napi_create_function(env, Socket));
+                    napi_property_name(env, "Term"),
+                    napi_create_function(env, Socket));
   napi_set_property(env, exports,
-                        napi_property_name(env, "Getopt"),
-                        napi_create_function(env, Socket));
+                    napi_property_name(env, "Getopt"),
+                    napi_create_function(env, Socket));
   napi_set_property(env, exports,
-                        napi_property_name(env, "Setopt"),
-                        napi_create_function(env, Socket));
+                    napi_property_name(env, "Setopt"),
+                    napi_create_function(env, Socket));
   napi_set_property(env, exports,
-                        napi_property_name(env, "Err"),
-                        napi_create_function(env, Socket));
+                    napi_property_name(env, "Err"),
+                    napi_create_function(env, Socket));
 
   // TODO convert symbol loading into napi style
   // Export symbols.
@@ -702,8 +701,9 @@ void InitAll(napi_env env, napi_value exports, napi_value module) {
     if (symbol_name == NULL) {
       break;
     }
-    Nan::Set(target, Nan::New(symbol_name).ToLocalChecked(),
-             Nan::New<Number>(value));
+    napi_set_property(env, exports,
+                      napi_property_name(env, symbol_name),
+                      napi_create_number(env, value));
   }
 }
 
