@@ -18,14 +18,7 @@
 
 #include <node_jsvmapi.h>
 
-// NAN_METHOD(Socket) {
-//   int domain = Nan::To<int>(info[0]).FromJust();
-//   int protocol = Nan::To<int>(info[1]).FromJust();
-
-//   info.GetReturnValue().Set(Nan::New<Number>(nn_socket(domain, protocol)));
-// }
-
-void Socket(napi_env env, napi_func_cb_info info) {
+NAPI_METHOD(Socket) {
   napi_value args[2];
   napi_get_cb_args(env, info, args, 2);
 
@@ -35,18 +28,7 @@ void Socket(napi_env env, napi_func_cb_info info) {
   napi_set_return_value(env, info, ret);
 }
 
-// NAN_METHOD(Close) {
-//   int s = Nan::To<int>(info[0]).FromJust();
-//   int rc = 0;
-
-//   do {
-//     rc = nn_close(s);
-//   } while (rc < 0 && errno == EINTR);
-
-//   info.GetReturnValue().Set(Nan::New<Number>(rc));
-// }
-
-void Close(napi_env env, napi_func_cb_info info) {
+NAPI_METHOD(Close) {
   napi_value args[1];
   napi_get_cb_args(env, info, args, 1);
 
@@ -61,17 +43,7 @@ void Close(napi_env env, napi_func_cb_info info) {
   napi_set_return_value(env, info, ret);
 }
 
-// NAN_METHOD(Setopt) {
-//   int s = Nan::To<int>(info[0]).FromJust();
-//   int level = Nan::To<int>(info[1]).FromJust();
-//   int option = Nan::To<int>(info[2]).FromJust();
-//   int optval = Nan::To<int>(info[3]).FromJust();
-
-//   info.GetReturnValue().Set(Nan::New<Number>(
-//       nn_setsockopt(s, level, option, &optval, sizeof(optval))));
-// }
-
-void Setopt(napi_env env, napi_func_cb_info info) {
+NAPI_METHOD(Setopt) {
   napi_value args[4];
   napi_get_cb_args(env, info, args, 4);
 
@@ -85,20 +57,7 @@ void Setopt(napi_env env, napi_func_cb_info info) {
   napi_set_return_value(env, info, ret);
 }
 
-// NAN_METHOD(Getopt) {
-//   int s = Nan::To<int>(info[0]).FromJust();
-//   int level = Nan::To<int>(info[1]).FromJust();
-//   int option = Nan::To<int>(info[2]).FromJust();
-//   int optval;
-//   size_t optsize = sizeof(optval);
-
-//   // check if the function succeeds
-//   if (nn_getsockopt(s, level, option, &optval, &optsize) == 0) {
-//     info.GetReturnValue().Set(Nan::New<Number>(optval));
-//   }
-// }
-
-void Getopt(napi_env env, napi_func_cb_info info) {
+NAPI_METHOD(Getopt) {
   napi_value args[3];
   napi_get_cb_args(env, info, args, 3);
 
@@ -115,17 +74,7 @@ void Getopt(napi_env env, napi_func_cb_info info) {
   }
 }
 
-// NAN_METHOD(Chan) {
-//   int s = Nan::To<int>(info[0]).FromJust();
-//   int level = NN_SUB;
-//   int option = Nan::To<int>(info[1]).FromJust();
-//   v8::String::Utf8Value str(info[2]);
-
-//   info.GetReturnValue().Set(
-//       Nan::New<Number>(nn_setsockopt(s, level, option, *str, str.length())));
-// }
-
-void Chan(napi_env env, napi_func_cb_info info) {
+NAPI_METHOD(Chan) {
   napi_value args[3];
   napi_get_cb_args(env, info, args, 3);
 
@@ -141,14 +90,7 @@ void Chan(napi_env env, napi_func_cb_info info) {
   napi_set_return_value(env, info, ret);
 }
 
-// NAN_METHOD(Bind) {
-//   int s = Nan::To<int>(info[0]).FromJust();
-//   String::Utf8Value addr(info[1]);
-
-//   info.GetReturnValue().Set(Nan::New<Number>(nn_bind(s, *addr)));
-// }
-
-void Bind(napi_env env, napi_func_cb_info info) {
+NAPI_METHOD(Bind) {
   napi_value args[2];
   napi_get_cb_args(env, info, args, 2);
 
@@ -159,14 +101,7 @@ void Bind(napi_env env, napi_func_cb_info info) {
   napi_set_return_value(env, info, ret);
 }
 
-// NAN_METHOD(Connect) {
-//   int s = Nan::To<int>(info[0]).FromJust();
-//   String::Utf8Value addr(info[1]);
-
-//   info.GetReturnValue().Set(Nan::New<Number>(nn_connect(s, *addr)));
-// }
-
-void Connect(napi_env env, napi_func_cb_info info) {
+NAPI_METHOD(Connect) {
   napi_value args[2];
   napi_get_cb_args(env, info, args, 2);
 
@@ -178,14 +113,7 @@ void Connect(napi_env env, napi_func_cb_info info) {
   napi_set_return_value(env, info, ret);
 }
 
-// NAN_METHOD(Shutdown) {
-//   int s = Nan::To<int>(info[0]).FromJust();
-//   int how = Nan::To<int>(info[1]).FromJust();
-
-//   info.GetReturnValue().Set(Nan::New<Number>(nn_shutdown(s, how)));
-// }
-
-void Shutdown(napi_env env, napi_func_cb_info info) {
+NAPI_METHOD(Shutdown) {
   napi_value args[2];
   napi_get_cb_args(env, info, args, 2);
 
@@ -196,21 +124,7 @@ void Shutdown(napi_env env, napi_func_cb_info info) {
   napi_set_return_value(env, info, ret);
 }
 
-// NAN_METHOD(Send) {
-//   int s = Nan::To<int>(info[0]).FromJust();
-//   int flags = Nan::To<int>(info[2]).FromJust();
-
-//   if (node::Buffer::HasInstance(info[1])) {
-//     info.GetReturnValue().Set(Nan::New<Number>(nn_send(
-//         s, node::Buffer::Data(info[1]), node::Buffer::Length(info[1]), flags)));
-//   } else {
-//     v8::String::Utf8Value str(info[1]);
-//     info.GetReturnValue().Set(
-//         Nan::New<Number>(nn_send(s, *str, str.length(), flags)));
-//   }
-// }
-
-void Send(napi_env env, napi_func_cb_info info) {
+NAPI_METHOD(Send) {
   napi_value args[3];
   napi_get_cb_args(env, info, args, 3);
 
@@ -232,28 +146,7 @@ void Send(napi_env env, napi_func_cb_info info) {
   }
 }
 
-// void fcb(char *data, void *hint) {
-//   nn_freemsg(data);
-//   (void) hint;
-// }
-
-// NAN_METHOD(Recv) {
-//   int s = Nan::To<int>(info[0]).FromJust();
-//   int flags = Nan::To<int>(info[1]).FromJust();
-
-//   // Invoke nanomsg function.
-//   char *buf = NULL;
-//   int len = nn_recv(s, &buf, NN_MSG, flags);
-
-//   if (len > -1) {
-//     v8::Local<v8::Object> h = Nan::NewBuffer(buf, len, fcb, 0).ToLocalChecked();
-//     info.GetReturnValue().Set(h);
-//   } else {
-//     info.GetReturnValue().Set(Nan::New<Number>(len));
-//   }
-// }
-
-void Recv(napi_env env, napi_func_cb_info info) {
+NAPI_METHOD(Recv) {
   napi_value args[2];
   napi_get_cb_args(env, info, args, 2);
 
@@ -271,29 +164,7 @@ void Recv(napi_env env, napi_func_cb_info info) {
   }
 }
 
-// NAN_METHOD(SymbolInfo) {
-//   int s = Nan::To<int>(info[0]).FromJust();
-//   struct nn_symbol_properties prop;
-//   int ret = nn_symbol_info(s, &prop, sizeof(prop));
-
-//   if (ret > 0) {
-//     Local<Object> obj = Nan::New<Object>();
-//     Nan::Set(obj, Nan::New("value").ToLocalChecked(),
-//              Nan::New<Number>(prop.value));
-//     Nan::Set(obj, Nan::New("ns").ToLocalChecked(), Nan::New<Number>(prop.ns));
-//     Nan::Set(obj, Nan::New("type").ToLocalChecked(),
-//              Nan::New<Number>(prop.type));
-//     Nan::Set(obj, Nan::New("unit").ToLocalChecked(),
-//              Nan::New<Number>(prop.unit));
-//     Nan::Set(obj, Nan::New("name").ToLocalChecked(),
-//              Nan::New<String>(prop.name).ToLocalChecked());
-//     info.GetReturnValue().Set(obj);
-//   } else if (ret != 0) {
-//     Nan::ThrowError(nn_strerror(nn_errno()));
-//   }
-// }
-
-void SymbolInfo(napi_env env, napi_func_cb_info info) {
+NAPI_METHOD(SymbolInfo) {
   napi_value args[1];
   napi_get_cb_args(env, info, args, 1);
 
@@ -321,26 +192,7 @@ void SymbolInfo(napi_env env, napi_func_cb_info info) {
   }
 }
 
-// NAN_METHOD(Symbol) {
-//   int s = Nan::To<int>(info[0]).FromJust();
-//   int val;
-//   const char *ret = nn_symbol(s, &val);
-
-//   if (ret) {
-//     Local<Object> obj = Nan::New<Object>();
-//     Nan::Set(obj, Nan::New("value").ToLocalChecked(), Nan::New<Number>(val));
-//     Nan::Set(obj, Nan::New("name").ToLocalChecked(),
-//              Nan::New<String>(ret).ToLocalChecked());
-//     info.GetReturnValue().Set(obj);
-//   } else {
-//     // symbol index out of range
-//     // this behaviour seems inconsistent with SymbolInfo() above
-//     // but we are faithfully following the libnanomsg API, warta and all
-//     Nan::ThrowError(nn_strerror(nn_errno())); // EINVAL
-//   }
-// }
-
-void Symbol(napi_env env, napi_func_cb_info info) {
+NAPI_METHOD(Symbol) {
   napi_value args[1];
   napi_get_cb_args(env, info, args, 1);
 
@@ -363,24 +215,12 @@ void Symbol(napi_env env, napi_func_cb_info info) {
   }
 }
 
-// NAN_METHOD(Term) { nn_term(); }
-
-void Term(napi_env env, napi_func_cb_info info) {
+NAPI_METHOD(Term) {
   nn_term();
 }
 
-// // Pass in two sockets, or (socket, -1) or (-1, socket) for loopback
-// NAN_METHOD(Device) {
-//   int s1 = Nan::To<int>(info[0]).FromJust();
-//   int s2 = Nan::To<int>(info[1]).FromJust();
-
-//   // nn_device only returns when it encounters an error
-//   nn_device(s1, s2);
-//   Nan::ThrowError(nkkn_strerror(nn_errno()));
-// }
-
 // Pass in two sockets, or (socket, -1) or (-1, socket) for loopback
-void Device(napi_env env, napi_func_cb_info info) {
+NAPI_METHOD(Device) {
   napi_value args[2];
   napi_get_cb_args(env, info, args, 2);
 
@@ -392,45 +232,21 @@ void Device(napi_env env, napi_func_cb_info info) {
   napi_throw_error(env, (char*) nn_strerror(nn_errno()));
 }
 
-// NAN_METHOD(Errno) { info.GetReturnValue().Set(Nan::New<Number>(nn_errno())); }
-
-void Errno(napi_env env, napi_func_cb_info info) {
+NAPI_METHOD(Errno) {
   napi_set_return_value(env, info, napi_create_number(env, nn_errno()));
 }
 
-// NAN_METHOD(Err) {
-//   info.GetReturnValue().Set(Nan::New(nn_strerror(nn_errno())).ToLocalChecked());
-// }
-
-void Err(napi_env env, napi_func_cb_info info) {
+NAPI_METHOD(Err) {
   napi_set_return_value(env, info,
                         napi_create_string(env,
                         (char*) nn_strerror(nn_errno())));
 }
-
-// typedef struct nanomsg_socket_s {
-//   uv_poll_t poll_handle;
-//   uv_os_sock_t sockfd;
-//   Nan::Callback *callback;
-// } nanomsg_socket_t;
 
 typedef struct nanomsg_socket_s {
   uv_poll_t poll_handle;
   uv_os_sock_t sockfd;
   Napi::Callback *callback;
 } nanomsg_socket_t;
-
-// void NanomsgReadable(uv_poll_t *req, int status, int events) {
-//   Nan::HandleScope scope;
-
-//   nanomsg_socket_t *context;
-//   context = reinterpret_cast<nanomsg_socket_t *>(req);
-
-//   if (events & UV_READABLE) {
-//     Local<Value> argv[] = { Nan::New<Number>(events) };
-//     context->callback->Call(1, argv);
-//   }
-// }
 
 void NanomsgReadable(uv_poll_t *req, int status, int events) {
   napi_env env = napi_get_current_env();
@@ -443,26 +259,6 @@ void NanomsgReadable(uv_poll_t *req, int status, int events) {
     context->callback->Call(napi_get_global_scope(env), 1, argv);
   }
 }
-
-// NAN_METHOD(PollSendSocket) {
-//   int s = Nan::To<int>(info[0]).FromJust();
-//   Nan::Callback *callback = new Nan::Callback(info[1].As<Function>());
-
-//   nanomsg_socket_t *context;
-//   size_t siz = sizeof(uv_os_sock_t);
-
-//   context = reinterpret_cast<nanomsg_socket_t *>(calloc(1, sizeof *context));
-//   context->poll_handle.data = context;
-//   context->callback = callback;
-//   nn_getsockopt(s, NN_SOL_SOCKET, NN_SNDFD, &context->sockfd, &siz);
-
-//   if (context->sockfd != 0) {
-//     uv_poll_init_socket(uv_default_loop(), &context->poll_handle,
-//                         context->sockfd);
-//     uv_poll_start(&context->poll_handle, UV_READABLE, NanomsgReadable);
-//     info.GetReturnValue().Set(WrapPointer(context, 8));
-//   }
-// }
 
 NAPI_METHOD(PollSendSocket) {
   napi_value args[2];
@@ -487,26 +283,6 @@ NAPI_METHOD(PollSendSocket) {
   }
 }
 
-// NAN_METHOD(PollReceiveSocket) {
-//   int s = Nan::To<int>(info[0]).FromJust();
-//   Nan::Callback *callback = new Nan::Callback(info[1].As<Function>());
-
-//   nanomsg_socket_t *context;
-//   size_t siz = sizeof(uv_os_sock_t);
-
-//   context = reinterpret_cast<nanomsg_socket_t *>(calloc(1, sizeof *context));
-//   context->poll_handle.data = context;
-//   context->callback = callback;
-//   nn_getsockopt(s, NN_SOL_SOCKET, NN_RCVFD, &context->sockfd, &siz);
-
-//   if (context->sockfd != 0) {
-//     uv_poll_init_socket(uv_default_loop(), &context->poll_handle,
-//                         context->sockfd);
-//     uv_poll_start(&context->poll_handle, UV_READABLE, NanomsgReadable);
-//     info.GetReturnValue().Set(WrapPointer(context, 8));
-//   }
-// }
-
 NAPI_METHOD(PollReceiveSocket) {
   napi_value args[2];
   napi_get_cb_args(env, info, args, 2);
@@ -530,12 +306,6 @@ NAPI_METHOD(PollReceiveSocket) {
   }
 }
 
-// NAN_METHOD(PollStop) {
-//   nanomsg_socket_t *context = UnwrapPointer<nanomsg_socket_t *>(info[0]);
-//   int r = uv_poll_stop(&context->poll_handle);
-//   info.GetReturnValue().Set(Nan::New<Number>(r));
-// }
-
 NAPI_METHOD(PollStop) {
   napi_value args[1];
   napi_get_cb_args(env, info, args, 1);
@@ -544,39 +314,6 @@ NAPI_METHOD(PollStop) {
   int r = uv_poll_stop(&context->poll_handle);
   napi_set_return_value(env, info, napi_create_number(env, r));
 }
-
-// class NanomsgDeviceWorker : public Nan::AsyncWorker {
-// public:
-//   NanomsgDeviceWorker(Nan::Callback *callback, int s1, int s2)
-//       : Nan::AsyncWorker(callback), s1(s1), s2(s2) {}
-//   ~NanomsgDeviceWorker() {}
-
-//   // Executed inside the worker-thread.
-//   // It is not safe to access V8, or V8 data structures
-//   // here, so everything we need for input and output
-//   // should go on `this`.
-//   void Execute() {
-//     // nn_errno() only returns on error
-//     nn_device(s1, s2);
-//     err = nn_errno();
-//   }
-
-//   // Executed when the async work is complete
-//   // this function will be run inside the main event loop
-//   // so it is safe to use V8 again
-//   void HandleOKCallback() {
-//     Nan::HandleScope scope;
-
-//     Local<Value> argv[] = { Nan::New<Number>(err) };
-
-//     callback->Call(1, argv);
-//   };
-
-// private:
-//   int s1;
-//   int s2;
-//   int err;
-// };
 
 class NanomsgDeviceWorker : public Napi::AsyncWorker {
 public:
@@ -611,15 +348,6 @@ private:
   int err;
 };
 
-// // Asynchronous access to the `nn_device()` function
-// NAN_METHOD(DeviceWorker) {
-//   int s1 = Nan::To<int>(info[0]).FromJust();
-//   int s2 = Nan::To<int>(info[1]).FromJust();
-//   Nan::Callback *callback = new Nan::Callback(info[2].As<Function>());
-
-//   Nan::AsyncQueueWorker(new NanomsgDeviceWorker(callback, s1, s2));
-// }
-
 // Asynchronous access to the `nn_device()` function
 NAPI_METHOD(DeviceWorker) {
   napi_value args[3];
@@ -633,65 +361,36 @@ NAPI_METHOD(DeviceWorker) {
   Napi::AsyncQueueWorker(new NanomsgDeviceWorker(callback, s1, s2));
 }
 
-// #define EXPORT_METHOD(C, S)                                                    \
+//#define EXPORT_METHOD(C, S)                                                    \
 //   Nan::Set(C, Nan::New(#S).ToLocalChecked(),                                   \
 //            Nan::GetFunction(Nan::New<FunctionTemplate>(S)).ToLocalChecked());
 
+#define EXPORT_METHOD(C, S)                                                    \
+   napi_set_property(env, C,                                                   \
+                     napi_property_name(env, #S),                             \
+                     napi_create_function(env, S));                            
+
+
 void InitAll(napi_env env, napi_value exports, napi_value module) {
-  napi_set_property(env, exports,
-                    napi_property_name(env, "Socket"),
-                    napi_create_function(env, Socket));
-  napi_set_property(env, exports,
-                    napi_property_name(env, "Close"),
-                    napi_create_function(env, Socket));
-  napi_set_property(env, exports,
-                    napi_property_name(env, "Chan"),
-                    napi_create_function(env, Socket));
-  napi_set_property(env, exports,
-                    napi_property_name(env, "Bind"),
-                    napi_create_function(env, Socket));
-  napi_set_property(env, exports,
-                    napi_property_name(env, "Connect"),
-                    napi_create_function(env, Socket));
-  napi_set_property(env, exports,
-                    napi_property_name(env, "Shutdown"),
-                    napi_create_function(env, Socket));
-  napi_set_property(env, exports,
-                    napi_property_name(env, "Send"),
-                    napi_create_function(env, Socket));
-  napi_set_property(env, exports,
-                    napi_property_name(env, "Recv"),
-                    napi_create_function(env, Socket));
-  napi_set_property(env, exports,
-                    napi_property_name(env, "Errno"),
-                    napi_create_function(env, Socket));
-  napi_set_property(env, exports,
-                    napi_property_name(env, "PollSendSocket"),
-                    napi_create_function(env, Socket));
-  napi_set_property(env, exports,
-                    napi_property_name(env, "PollReceiveSocket"),
-                    napi_create_function(env, Socket));
-  napi_set_property(env, exports,
-                    napi_property_name(env, "DeviceWorker"),
-                    napi_create_function(env, Socket));
-  napi_set_property(env, exports,
-                    napi_property_name(env, "SymbolInfo"),
-                    napi_create_function(env, Socket));
-  napi_set_property(env, exports,
-                    napi_property_name(env, "Symbol"),
-                    napi_create_function(env, Socket));
-  napi_set_property(env, exports,
-                    napi_property_name(env, "Term"),
-                    napi_create_function(env, Socket));
-  napi_set_property(env, exports,
-                    napi_property_name(env, "Getopt"),
-                    napi_create_function(env, Socket));
-  napi_set_property(env, exports,
-                    napi_property_name(env, "Setopt"),
-                    napi_create_function(env, Socket));
-  napi_set_property(env, exports,
-                    napi_property_name(env, "Err"),
-                    napi_create_function(env, Socket));
+
+  EXPORT_METHOD(exports, Socket);
+  EXPORT_METHOD(exports, Close);
+  EXPORT_METHOD(exports, Chan);
+  EXPORT_METHOD(exports, Bind);
+  EXPORT_METHOD(exports, Connect);
+  EXPORT_METHOD(exports, Shutdown);
+  EXPORT_METHOD(exports, Send);
+  EXPORT_METHOD(exports, Recv);
+  EXPORT_METHOD(exports, Errno);
+  EXPORT_METHOD(exports, PollSendSocket);
+  EXPORT_METHOD(exports, PollReceiveSocket);
+  EXPORT_METHOD(exports, DeviceWorker);
+  EXPORT_METHOD(exports, SymbolInfo);
+  EXPORT_METHOD(exports, Symbol);
+  EXPORT_METHOD(exports, Term);
+  EXPORT_METHOD(exports, Getopt);
+  EXPORT_METHOD(exports, Setopt);
+  EXPORT_METHOD(exports, Err);
 
   // TODO convert symbol loading into napi style
   // Export symbols.
