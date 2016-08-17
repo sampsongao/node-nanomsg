@@ -84,7 +84,7 @@ NAPI_METHOD(Chan) {
   char str[1024];
   int remain = napi_get_string_from_value(env, args[2], str, 1024);
   int length = napi_get_string_utf8_length(env, args[2]);
-  
+ 
   int result = nn_setsockopt(s, level, option, str, length);
   napi_value ret = napi_create_number(env, result);
   napi_set_return_value(env, info, ret);
@@ -361,15 +361,10 @@ NAPI_METHOD(DeviceWorker) {
   Napi::AsyncQueueWorker(new NanomsgDeviceWorker(callback, s1, s2));
 }
 
-//#define EXPORT_METHOD(C, S)                                                    \
-//   Nan::Set(C, Nan::New(#S).ToLocalChecked(),                                   \
-//            Nan::GetFunction(Nan::New<FunctionTemplate>(S)).ToLocalChecked());
-
 #define EXPORT_METHOD(C, S)                                                    \
    napi_set_property(env, C,                                                   \
                      napi_property_name(env, #S),                             \
                      napi_create_function(env, S));                            
-
 
 void InitAll(napi_env env, napi_value exports, napi_value module) {
 
