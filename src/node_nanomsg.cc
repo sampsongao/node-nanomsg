@@ -249,6 +249,7 @@ typedef struct nanomsg_socket_s {
 } nanomsg_socket_t;
 
 void NanomsgReadable(uv_poll_t *req, int status, int events) {
+  Napi::HandleScope scope;
   napi_env env = napi_get_current_env();
 
   nanomsg_socket_t *context;
@@ -379,10 +380,12 @@ void InitAll(napi_env env, napi_value exports, napi_value module) {
   EXPORT_METHOD(exports, Errno);
   EXPORT_METHOD(exports, PollSendSocket);
   EXPORT_METHOD(exports, PollReceiveSocket);
+  EXPORT_METHOD(exports, PollStop);
   EXPORT_METHOD(exports, DeviceWorker);
   EXPORT_METHOD(exports, SymbolInfo);
   EXPORT_METHOD(exports, Symbol);
   EXPORT_METHOD(exports, Term);
+
   EXPORT_METHOD(exports, Getopt);
   EXPORT_METHOD(exports, Setopt);
   EXPORT_METHOD(exports, Err);
