@@ -12,7 +12,7 @@
 
 inline static napi_value WrapPointer(void *ptr, size_t length) {
   napi_env env = napi_get_current_env();
-  return napi_buffer_copy(env, static_cast<char *>(ptr), length);
+  return napi_buffer_new(env, static_cast<char *>(ptr), length);
 }
 
 /*
