@@ -139,7 +139,7 @@ NAPI_METHOD(Send) {
   } else {
     char str[1024];
     int remain = napi_get_string_from_value(env, args[1], str, 1024);
-    int length = napi_get_string_utf8_length(env, args[1]);
+    int length = strlen(str);
     int result = nn_send(s, str, length, flags);
     napi_value ret = napi_create_number(env, result);
     napi_set_return_value(env, info, ret);
