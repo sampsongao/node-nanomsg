@@ -367,7 +367,7 @@ NAPI_METHOD(DeviceWorker) {
                      napi_property_name(env, #S),                             \
                      napi_create_function(env, S));                            
 
-void InitAll(napi_env env, napi_value exports, napi_value module) {
+NAPI_MODULE_INIT(InitAll) {
 
   EXPORT_METHOD(exports, Socket);
   EXPORT_METHOD(exports, Close);
