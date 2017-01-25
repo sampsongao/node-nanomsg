@@ -3,6 +3,7 @@
 #include "node_pointer.h"
 
 #include <nn.h>
+#include <uv.h>
 
 #include <inproc.h>
 #include <ipc.h>
@@ -16,7 +17,7 @@
 #include <reqrep.h>
 #include <survey.h>
 
-#include <node_jsvmapi.h>
+#include <node_api_helpers.h>
 
 NAPI_METHOD(Socket) {
   napi_value args[2];
@@ -364,8 +365,8 @@ NAPI_METHOD(DeviceWorker) {
 
 #define EXPORT_METHOD(C, S)                                                    \
    napi_set_property(env, C,                                                   \
-                     napi_property_name(env, #S),                             \
-                     napi_create_function(env, S));                            
+                     napi_property_name(env, #S),                              \
+                     napi_create_function(env, S, nullptr));
 
 NAPI_MODULE_INIT(InitAll) {
 
