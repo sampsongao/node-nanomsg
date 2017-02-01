@@ -5,14 +5,25 @@
 
 #include <node_jsvmapi.h>
 
+#define CHECK_STATUS                   \
+  if (status != napi_ok) {             \
+    exit(1);                           \
+  }
+
 
 /*
  * Wraps "ptr" into a new SlowBuffer instance with size "length".
  */
 
 inline static napi_value WrapPointer(void *ptr, size_t length) {
-  napi_env env = napi_get_current_env();
-  return napi_buffer_new(env, static_cast<char *>(ptr), length);
+  napi_status status;
+  napi_env env;
+  status = napi_get_current_env(&env);
+  CHECK_STATUS;
+  napi_value buf;
+  status = napi_buffer_new(env, static_cast<char *>(ptr), length, &buf);
+  CHECK_STATUS;
+  return buf;
 }
 
 /*
@@ -28,9 +39,19 @@ inline static napi_value WrapPointer(void *ptr) {
  */
 
 inline static char *UnwrapPointer(napi_value buffer, int64_t offset) {
-  napi_env env = napi_get_current_env();
-  if (napi_buffer_has_instance(env, buffer)) {
-    return napi_buffer_data(env, buffer) + offset;
+  napi_status status;
+  napi_env env;
+  status = napi_get_current_env(&env);
+  CHECK_STATUS;
+  bool has_instance;
+  status = napi_buffer_has_instance(env, buffer, &has_instance);
+  CHECK_STATUS;
+  CHECK_STATUS;
+  if (has_instance) {
+    char* data;
+    status = napi_buffer_data(env, buffer, &data);
+    CHECK_STATUS;
+    return data;
   } else {
     return 0;
   }
@@ -41,9 +62,18 @@ inline static char *UnwrapPointer(napi_value buffer, int64_t offset) {
  */
 
 inline static char *UnwrapPointer(napi_value buffer) {
-  napi_env env = napi_get_current_env();
-  if (napi_buffer_has_instance(env, buffer)) {
-    return napi_buffer_data(env, buffer);
+  napi_status status;
+  napi_env env;
+  status = napi_get_current_env(&env);
+  CHECK_STATUS;
+  bool has_instance;
+  status = napi_buffer_has_instance(env, buffer, &has_instance);
+  CHECK_STATUS;
+  if (has_instance) {
+    char* data;
+    status = napi_buffer_data(env, buffer, &data);
+    CHECK_STATUS;
+    return data;
   } else {
     return 0;
   }
