@@ -427,7 +427,7 @@ typedef struct nanomsg_socket_s {
 } nanomsg_socket_t;
 
 void NanomsgReadable(uv_poll_t *req, int status, int events) {
-  Napi::HandleScope scope;
+  Napi::HandleScope s;
   napi_env env;
   status = napi_get_current_env(&env);
   CHECK_STATUS;
@@ -536,6 +536,7 @@ public:
   // this function will be run inside the main event loop
   // so it is safe to use V8 again
   void HandleOKCallback() {
+    Napi::HandleScope s;
     napi_status status;
     napi_env env;
     status = napi_get_current_env(&env);
@@ -585,6 +586,7 @@ NAPI_METHOD(DeviceWorker) {
   CHECK_STATUS;
 
 NAPI_MODULE_INIT(InitAll) {
+  Napi::HandleScope scope;
   napi_status status;
   napi_propertyname pro;
   napi_value val;
