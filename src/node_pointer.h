@@ -5,6 +5,12 @@
 
 #include <node_jsvmapi.h>
 
+// UNUSED: however, inline functions don't generate code.
+inline static void wrap_pointer_cb(void *data) {
+  // fprintf(stderr, "wrap_pointer_cb\n");
+}
+
+
 #define CHECK_STATUS                   \
   if (status != napi_ok) {             \
     exit(1);                           \
@@ -21,7 +27,7 @@ inline static napi_value WrapPointer(void *ptr, size_t length) {
   status = napi_get_current_env(&env);
   CHECK_STATUS;
   napi_value buf;
-  status = napi_buffer_new(env, static_cast<char *>(ptr), length, &buf);
+  status = napi_create_external_buffer(env, length, static_cast<char *>(ptr), wrap_pointer_cb, &buf);
   CHECK_STATUS;
   return buf;
 }
@@ -44,12 +50,13 @@ inline static char *UnwrapPointer(napi_value buffer, int64_t offset) {
   status = napi_get_current_env(&env);
   CHECK_STATUS;
   bool has_instance;
-  status = napi_buffer_has_instance(env, buffer, &has_instance);
+  status = napi_is_buffer(env, buffer, &has_instance);
   CHECK_STATUS;
   CHECK_STATUS;
   if (has_instance) {
     char* data;
-    status = napi_buffer_data(env, buffer, &data);
+    size_t size;
+    status = napi_get_buffer_info(env, buffer, &data, &size);
     CHECK_STATUS;
     return data;
   } else {
@@ -67,11 +74,12 @@ inline static char *UnwrapPointer(napi_value buffer) {
   status = napi_get_current_env(&env);
   CHECK_STATUS;
   bool has_instance;
-  status = napi_buffer_has_instance(env, buffer, &has_instance);
+  status = napi_is_buffer(env, buffer, &has_instance);
   CHECK_STATUS;
   if (has_instance) {
     char* data;
-    status = napi_buffer_data(env, buffer, &data);
+    size_t size;
+    status = napi_get_buffer_info(env, buffer, &data, &size);
     CHECK_STATUS;
     return data;
   } else {

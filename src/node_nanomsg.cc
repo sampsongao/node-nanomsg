@@ -129,11 +129,11 @@ NAPI_METHOD(Chan) {
   status = napi_get_value_int32(env, args[1], &option);
   CHECK_STATUS;
   char str[1024];
-  int remain;
-  status = napi_get_string_from_value(env, args[2], str, 1024, &remain);
+  int copied;
+  status = napi_get_value_string_utf8(env, args[2], str, 1024, &copied);
   CHECK_STATUS;
   int length;
-  status = napi_get_string_utf8_length(env, args[2], &length);
+  status = napi_get_value_string_utf8_length(env, args[2], &length);
   CHECK_STATUS;
  
   int result = nn_setsockopt(s, level, option, str, length);
@@ -154,8 +154,8 @@ NAPI_METHOD(Bind) {
   status = napi_get_value_int32(env, args[0], &s);
   CHECK_STATUS;
   char addr[1024];
-  int remain;
-  status = napi_get_string_from_value(env, args[1], addr, 1024, &remain);
+  int copied;
+  status = napi_get_value_string_utf8(env, args[1], addr, 1024, &copied);
   CHECK_STATUS;
   napi_value ret;
   status = napi_create_number(env, nn_bind(s, addr), &ret);
@@ -174,8 +174,8 @@ NAPI_METHOD(Connect) {
   status = napi_get_value_int32(env, args[0], &s);
   CHECK_STATUS;
   char addr[1024];
-  int remain;
-  status = napi_get_string_from_value(env, args[1], addr, 1024, &remain);
+  int copied;
+  status = napi_get_value_string_utf8(env, args[1], addr, 1024, &copied);
   CHECK_STATUS;
 
   napi_value ret;
@@ -218,14 +218,12 @@ NAPI_METHOD(Send) {
   CHECK_STATUS;
 
   bool has_instance;
-  status = napi_buffer_has_instance(env, args[1], &has_instance);
+  status = napi_is_buffer(env, args[1], &has_instance);
   CHECK_STATUS;
   if (has_instance) {
     char* buf;
-    status = napi_buffer_data(env, args[1], &buf);
-    CHECK_STATUS;
     size_t size;
-    status = napi_buffer_length(env, args[1], &size);
+    status = napi_get_buffer_info(env, args[1], &buf, &size);
     CHECK_STATUS;
     int result = nn_send(s, buf, size, flags);
     napi_value ret;
@@ -235,8 +233,8 @@ NAPI_METHOD(Send) {
     CHECK_STATUS;
   } else {
     char str[1024];
-    int remain;
-    status = napi_get_string_from_value(env, args[1], str, 1024, &remain);
+    int copied;
+    status = napi_get_value_string_utf8(env, args[1], str, 1024, &copied);
     CHECK_STATUS;
     int length = strlen(str);
     int result = nn_send(s, str, length, flags);
@@ -266,7 +264,7 @@ NAPI_METHOD(Recv) {
 
   if (len > -1) {
     napi_value h;
-    status = napi_buffer_copy(env, buf, len, &h);
+    status = napi_create_buffer_copy(env, buf, len, &h);
     CHECK_STATUS;
     status = napi_set_return_value(env, info, h);
     CHECK_STATUS;
@@ -324,7 +322,7 @@ NAPI_METHOD(SymbolInfo) {
     CHECK_STATUS
     status = napi_property_name(env, "name", &pro);
     CHECK_STATUS;
-    status = napi_create_string(env, prop.name, &val);
+    status = napi_create_string_utf8(env, prop.name, -1, &val);
     CHECK_STATUS;
     status = napi_set_property(env, obj, pro, val);
     CHECK_STATUS
@@ -363,7 +361,7 @@ NAPI_METHOD(Symbol) {
     CHECK_STATUS;
     status = napi_property_name(env, "name", &pro);
     CHECK_STATUS;
-    status = napi_create_string(env, ret, &val);
+    status = napi_create_string_utf8(env, ret, -1, &val);
     CHECK_STATUS;
     status = napi_set_property(env, obj, pro, val);
     CHECK_STATUS;
@@ -414,7 +412,7 @@ NAPI_METHOD(Errno) {
 NAPI_METHOD(Err) {
   napi_status status;
   napi_value str;
-  status = napi_create_string(env, (char*) nn_strerror(nn_errno()), &str);
+  status = napi_create_string_utf8(env, (char*) nn_strerror(nn_errno()), -1, &str);
   CHECK_STATUS;
   status = napi_set_return_value(env, info, str);
   CHECK_STATUS;
