@@ -1,17 +1,18 @@
 #pragma once
 
-#include <nan.h>
+#include "macros.h"
+#include <node_api_helpers.h>
+#include <uv.h>
 
 class PollCtx {
   private:
-    const Nan::Callback callback;
+    const Napi::Callback callback;
     uv_os_sock_t sockfd; // for libnanomsg
     void begin_poll (const int s, const bool is_sender);
   public:
     uv_poll_t poll_handle; // for libuv
-    PollCtx (const int s, const bool is_sender,
-        const v8::Local<v8::Function> cb);
+    PollCtx (int s, bool is_sender, napi_value cb);
     void invoke_callback (const int events) const;
-    static v8::Local<v8::Value> WrapPointer (void* ptr, size_t length);
-    static PollCtx* UnwrapPointer (v8::Local<v8::Value> buffer);
+    static napi_value WrapPointer (void* ptr, size_t length);
+    static PollCtx* UnwrapPointer (napi_value buffer);
 };
