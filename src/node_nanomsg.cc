@@ -499,6 +499,12 @@ NAPI_METHOD(PollReceiveSocket) {
   }
 }
 
+static void close_cb(uv_handle_t *handle) {
+  const nanomsg_socket_t* const context = static_cast<nanomsg_socket_t*>(handle->data);
+  delete context->callback;
+  delete context;
+}
+
 NAPI_METHOD(PollStop) {
   napi_status status;
   napi_value args[1];
@@ -507,6 +513,7 @@ NAPI_METHOD(PollStop) {
 
   nanomsg_socket_t *context = UnwrapPointer<nanomsg_socket_t *>(args[0]);
   int r = uv_poll_stop(&context->poll_handle);
+  uv_close(reinterpret_cast<uv_handle_t*>(&context->poll_handle), close_cb);
   napi_value ret;
   status = napi_create_number(env, r, &ret);
   CHECK_STATUS;
