@@ -12,6 +12,7 @@
 #include "ws.h"
 
 #include "macros.h"
+#include <string.h>
 
 NAPI_METHOD(Socket) {
   BEGIN(2);
@@ -183,7 +184,8 @@ NAPI_METHOD(Send) {
   if (has_instance) {
     char* buf;
     size_t size;
-    status = napi_get_buffer_info(env, args[1], &buf, &size);
+    status = napi_get_buffer_info(env, args[1],
+                                  reinterpret_cast<void**>(&buf), &size);
     CHECK_STATUS;
     int result = nn_send(s, buf, size, flags);
     napi_value ret;
@@ -192,9 +194,12 @@ NAPI_METHOD(Send) {
     status = napi_set_return_value(env, info, ret);
     CHECK_STATUS;
   } else {
+    napi_value string;
+    status = napi_coerce_to_string(env, args[1], &string);
+    CHECK_STATUS;
     char str[1024];
     int copied;
-    status = napi_get_value_string_utf8(env, args[1], str, 1024, &copied);
+    status = napi_get_value_string_utf8(env, string, str, 1024, &copied);
     CHECK_STATUS;
     int length = strlen(str);
     int result = nn_send(s, str, length, flags);
@@ -249,33 +254,33 @@ NAPI_METHOD(SymbolInfo) {
     napi_value obj;
     status = napi_create_object(env, &obj);
     CHECK_STATUS;
-    napi_propertyname pro;
+    napi_value pro;
     napi_value val;
-    status = napi_property_name(env, "value", &pro);
+    status = napi_create_string_utf8(env, "value", -1, &pro);
     CHECK_STATUS;
     status = napi_create_number(env, prop.value, &val);
     CHECK_STATUS;
     status = napi_set_property(env, obj, pro, val);
     CHECK_STATUS
-    status = napi_property_name(env, "ns", &pro);
+    status = napi_create_string_utf8(env, "ns", -1, &pro);
     CHECK_STATUS;
     status = napi_create_number(env, prop.ns, &val);
     CHECK_STATUS;
     status = napi_set_property(env, obj, pro, val);
     CHECK_STATUS
-    status = napi_property_name(env, "type", &pro);
+    status = napi_create_string_utf8(env, "type", -1, &pro);
     CHECK_STATUS;
     status = napi_create_number(env, prop.type, &val);
     CHECK_STATUS;
     status = napi_set_property(env, obj, pro, val);
     CHECK_STATUS
-    status = napi_property_name(env, "unit", &pro);
+    status = napi_create_string_utf8(env, "unit", -1, &pro);
     CHECK_STATUS;
     status = napi_create_number(env, prop.unit, &val);
     CHECK_STATUS;
     status = napi_set_property(env, obj, pro, val);
     CHECK_STATUS
-    status = napi_property_name(env, "name", &pro);
+    status = napi_create_string_utf8(env, "name", -1, &pro);
     CHECK_STATUS;
     status = napi_create_string_utf8(env, prop.name, -1, &val);
     CHECK_STATUS;
@@ -302,15 +307,15 @@ NAPI_METHOD(Symbol) {
     napi_value obj;
     status = napi_create_object(env, &obj);
     CHECK_STATUS;
-    napi_propertyname pro;
+    napi_value pro;
     napi_value val;
-    status = napi_property_name(env, "value", &pro);
+    status = napi_create_string_utf8(env, "value", -1, &pro);
     CHECK_STATUS;
     status = napi_create_number(env, value, &val);
     CHECK_STATUS;
     status = napi_set_property(env, obj, pro, val);
     CHECK_STATUS;
-    status = napi_property_name(env, "name", &pro);
+    status = napi_create_string_utf8(env, "name", -1, &pro);
     CHECK_STATUS;
     status = napi_create_string_utf8(env, ret, -1, &val);
     CHECK_STATUS;
@@ -371,8 +376,8 @@ NAPI_METHOD(PollSocket) {
   bool is_sender;
   status = napi_get_value_bool(env, args[1], &is_sender);
   CHECK_STATUS;
-  PollCtx *context = new PollCtx(s, is_sender, args[2]);
-  napi_value ret = PollCtx::WrapPointer(context, sizeof context);
+  PollCtx *context = new PollCtx(env, s, is_sender, args[2]);
+  napi_value ret = PollCtx::WrapPointer(env, context, sizeof context);
   status = napi_set_return_value(env, info, ret);
   CHECK_STATUS;
 }
@@ -384,7 +389,7 @@ static void close_cb(uv_handle_t *handle) {
 
 NAPI_METHOD(PollStop) {
   BEGIN(1);
-  PollCtx* const context = PollCtx::UnwrapPointer(args[0]);
+  PollCtx* const context = PollCtx::UnwrapPointer(env, args[0]);
   if (context != NULL) {
     uv_close(reinterpret_cast<uv_handle_t*>(&context->poll_handle), close_cb);
   }
@@ -392,11 +397,23 @@ NAPI_METHOD(PollStop) {
   // something.
 }
 
-class NanomsgDeviceWorker : public Napi::AsyncWorker {
+class NanomsgDeviceWorker {
 public:
-  NanomsgDeviceWorker(Napi::Callback *callback, int s1, int s2)
-      : Napi::AsyncWorker(callback), s1(s1), s2(s2) {}
-  ~NanomsgDeviceWorker() {}
+  NanomsgDeviceWorker(napi_env _env, napi_value _fn, int _s1, int _s2) {
+    env = _env;
+    napi_create_reference(env, _fn, 1, &handle);
+    s1 = _s1;
+    s2 = _s2;
+    err = 0;
+    request = napi_create_async_work();
+  }
+
+  ~NanomsgDeviceWorker() {
+    napi_status status;
+    status = napi_delete_reference(env, handle);
+    CHECK_STATUS;
+    napi_delete_async_work(request);
+  }
 
   // Executed inside the worker-thread.
   // It is not safe to access V8, or V8 data structures
@@ -408,24 +425,100 @@ public:
     err = nn_errno();
   }
 
+  void WorkComplete() {
+    napi_status status;
+    napi_handle_scope scope;
+    status = napi_open_handle_scope(env, &scope);
+    CHECK_STATUS;
+
+    if (err != 0)
+      HandleErrorCallback();
+    else
+      HandleOKCallback();
+
+    status = napi_close_handle_scope(env, scope);
+    CHECK_STATUS;
+  }
+
   // Executed when the async work is complete
   // this function will be run inside the main event loop
   // so it is safe to use V8 again
   void HandleOKCallback() {
-    Napi::HandleScope scope;
     napi_status status;
-    napi_env env;
-    status = napi_get_current_env(&env);
-    CHECK_STATUS;
+    napi_handle_scope scope;
+    status = napi_open_handle_scope(env, &scope);
+    CHECK_STATUS;;
 
     napi_value argv[1];
     status = napi_create_number(env, err, argv);
     CHECK_STATUS;
 
-    callback->Call(1, argv);
+    napi_value global;
+    status = napi_get_global(env, &global);
+    CHECK_STATUS;
+    napi_value fn;
+    status = napi_get_reference_value(env, handle, &fn);
+    napi_value result;
+    status = napi_make_callback(env, global, fn, 1, argv, &result);
+    CHECK_STATUS;
+    status = napi_close_handle_scope(env, scope);
+    CHECK_STATUS;
   };
 
+  void HandleErrorCallback() {
+    napi_status status;
+    napi_handle_scope scope;
+    status = napi_open_handle_scope(env, &scope);
+    CHECK_STATUS;;
+
+    napi_value n;
+    status = napi_create_number(env, err, &n);
+    CHECK_STATUS;
+    napi_value s;
+    status = napi_coerce_to_string(env, n, &s);
+    CHECK_STATUS;
+
+    napi_value argv[1];
+    status = napi_create_error(env, s, argv);
+    CHECK_STATUS;
+
+    napi_value global;
+    status = napi_get_global(env, &global);
+    CHECK_STATUS;
+    napi_value fn;
+    status = napi_get_reference_value(env, handle, &fn);
+    napi_value result;
+    status = napi_make_callback(env, global, fn, 1, argv, &result);
+    CHECK_STATUS;
+
+    status = napi_close_handle_scope(env, scope);
+    CHECK_STATUS;
+  }
+
+  napi_work request;
+
+  static void CallExecute(void* this_pointer){
+    NanomsgDeviceWorker* self = static_cast<NanomsgDeviceWorker*>(this_pointer);
+    self->Execute();
+  }
+
+  static void CallWorkComplete(void* this_pointer) {
+    NanomsgDeviceWorker* self = static_cast<NanomsgDeviceWorker*>(this_pointer);
+    self->WorkComplete();
+  }
+
+
+  static inline void AsyncQueueWorker(NanomsgDeviceWorker* worker) {
+    napi_work req = worker->request;
+    napi_async_set_data(req, static_cast<void*>(worker));
+    napi_async_set_execute(req, &NanomsgDeviceWorker::CallExecute);
+    napi_async_set_complete(req, &NanomsgDeviceWorker::CallWorkComplete);
+    napi_async_queue_worker(req);
+  }
+
 private:
+  napi_env env;
+  napi_ref handle;
   int s1;
   int s2;
   int err;
@@ -445,24 +538,24 @@ NAPI_METHOD(DeviceWorker) {
   status = napi_get_value_int32(env, args[1], &s2);
   CHECK_STATUS;
 
-  Napi::Callback* callback = new Napi::Callback(args[2]);
-
-  Napi::AsyncQueueWorker(new NanomsgDeviceWorker(callback, s1, s2));
+  NanomsgDeviceWorker::AsyncQueueWorker(new NanomsgDeviceWorker(env, args[2], s1, s2));
 }
 
 #define EXPORT_METHOD(C, S)                                            \
-  status = napi_property_name(env, #S, &pro);                          \
+  status = napi_create_string_utf8(env, #S, -1, &pro);                 \
   CHECK_STATUS;                                                        \
-  status = napi_create_function(env, S, nullptr, &val);                \
+  status = napi_create_function(env, #C, S, nullptr, &val);             \
   CHECK_STATUS;                                                        \
   status = napi_set_property(env, C, pro, val);                        \
   CHECK_STATUS;
 
 
 NAPI_MODULE_INIT(InitAll) {
-  Napi::HandleScope scope;
   napi_status status;
-  napi_propertyname pro;
+  napi_handle_scope scope;
+  status = napi_open_handle_scope(env, &scope);
+  CHECK_STATUS;;
+  napi_value pro;
   napi_value val;
 
 
@@ -494,13 +587,16 @@ NAPI_MODULE_INIT(InitAll) {
     if (symbol_name == NULL) {
       break;
     }
-    status = napi_property_name(env, symbol_name, &pro);
+    status = napi_create_string_utf8(env, symbol_name, -1, &pro);
     CHECK_STATUS;
     status = napi_create_number(env, value, &val);
     CHECK_STATUS;
     status = napi_set_property(env, exports, pro, val);
     CHECK_STATUS;
   }
+
+  status = napi_close_handle_scope(env, scope);
+  CHECK_STATUS;
 }
 
-NODE_MODULE_ABI(node_nanomsg, InitAll)
+NAPI_MODULE(node_nanomsg, InitAll)
