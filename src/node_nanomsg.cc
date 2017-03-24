@@ -105,11 +105,11 @@ NAPI_METHOD(Chan) {
   status = napi_get_value_int32(env, args[1], &option);
   CHECK_STATUS;
   char str[1024];
-  int copied;
+  size_t copied;
   status = napi_get_value_string_utf8(env, args[2], str, 1024, &copied);
   CHECK_STATUS;
-  int length;
-  status = napi_get_value_string_utf8_length(env, args[2], &length);
+  size_t length;
+  status = napi_get_value_string_length(env, args[2], &length);
   CHECK_STATUS;
 
   int result = nn_setsockopt(s, level, option, str, length);
@@ -126,7 +126,7 @@ NAPI_METHOD(Bind) {
   status = napi_get_value_int32(env, args[0], &s);
   CHECK_STATUS;
   char addr[1024];
-  int copied;
+  size_t copied;
   status = napi_get_value_string_utf8(env, args[1], addr, 1024, &copied);
   CHECK_STATUS;
   napi_value ret;
@@ -142,7 +142,7 @@ NAPI_METHOD(Connect) {
   status = napi_get_value_int32(env, args[0], &s);
   CHECK_STATUS;
   char addr[1024];
-  int copied;
+  size_t copied;
   status = napi_get_value_string_utf8(env, args[1], addr, 1024, &copied);
   CHECK_STATUS;
 
@@ -198,7 +198,7 @@ NAPI_METHOD(Send) {
     status = napi_coerce_to_string(env, args[1], &string);
     CHECK_STATUS;
     char str[1024];
-    int copied;
+    size_t copied;
     status = napi_get_value_string_utf8(env, string, str, 1024, &copied);
     CHECK_STATUS;
     int length = strlen(str);
@@ -225,11 +225,12 @@ NAPI_METHOD(Recv) {
   CHECK_STATUS;
 
   char* buf = NULL;
-  int len = nn_recv(s, &buf, NN_MSG, flags);
+  const int len = nn_recv(s, &buf, NN_MSG, flags);
 
   if (len > -1) {
     napi_value h;
-    status = napi_create_buffer_copy(env, buf, len, &h);
+    status = napi_create_buffer_copy(env, static_cast<const size_t>(len),
+                                     buf, NULL, &h);
     CHECK_STATUS;
     status = napi_set_return_value(env, info, h);
     CHECK_STATUS;
