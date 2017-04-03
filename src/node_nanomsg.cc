@@ -401,19 +401,22 @@ NAPI_METHOD(PollStop) {
 class NanomsgDeviceWorker {
 public:
   NanomsgDeviceWorker(napi_env _env, napi_value _fn, int _s1, int _s2) {
+    napi_status status;
     env = _env;
-    napi_create_reference(env, _fn, 1, &handle);
+    status = napi_create_reference(env, _fn, 1, &handle);
+    CHECK_STATUS;
     s1 = _s1;
     s2 = _s2;
     err = 0;
-    request = napi_create_async_work();
+    status = napi_create_async_work(env, &NanomsgDeviceWorker::CallExecute, &NanomsgDeviceWorker::CallWorkComplete, this, &request);
+    CHECK_STATUS;
   }
 
   ~NanomsgDeviceWorker() {
     napi_status status;
     status = napi_delete_reference(env, handle);
     CHECK_STATUS;
-    napi_delete_async_work(request);
+    napi_delete_async_work(env, request);
   }
 
   // Executed inside the worker-thread.
@@ -496,25 +499,24 @@ public:
     CHECK_STATUS;
   }
 
-  napi_work request;
+  napi_async_work request;
 
-  static void CallExecute(void* this_pointer){
+  static void CallExecute(napi_env env, void* this_pointer){
     NanomsgDeviceWorker* self = static_cast<NanomsgDeviceWorker*>(this_pointer);
     self->Execute();
   }
 
-  static void CallWorkComplete(void* this_pointer) {
+  static void CallWorkComplete(napi_env env, napi_status status, void* this_pointer) {
     NanomsgDeviceWorker* self = static_cast<NanomsgDeviceWorker*>(this_pointer);
     self->WorkComplete();
   }
 
 
-  static inline void AsyncQueueWorker(NanomsgDeviceWorker* worker) {
-    napi_work req = worker->request;
-    napi_async_set_data(req, static_cast<void*>(worker));
-    napi_async_set_execute(req, &NanomsgDeviceWorker::CallExecute);
-    napi_async_set_complete(req, &NanomsgDeviceWorker::CallWorkComplete);
-    napi_async_queue_worker(req);
+  static inline void AsyncQueueWorker(napi_env env, NanomsgDeviceWorker* worker) {
+    napi_status status;
+    napi_async_work req = worker->request;
+    status = napi_queue_async_work(env, req);
+    CHECK_STATUS;
   }
 
 private:
@@ -539,7 +541,7 @@ NAPI_METHOD(DeviceWorker) {
   status = napi_get_value_int32(env, args[1], &s2);
   CHECK_STATUS;
 
-  NanomsgDeviceWorker::AsyncQueueWorker(new NanomsgDeviceWorker(env, args[2], s1, s2));
+  NanomsgDeviceWorker::AsyncQueueWorker(env, new NanomsgDeviceWorker(env, args[2], s1, s2));
 }
 
 #define EXPORT_METHOD(C, S)                                            \

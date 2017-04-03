@@ -2,7 +2,6 @@
 
 #include "macros.h"
 #include <node_api.h>
-#include <node_api_async.h>
 #include <uv.h>
 
 class PollCtx {
