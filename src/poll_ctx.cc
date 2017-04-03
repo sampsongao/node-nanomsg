@@ -55,7 +55,7 @@ void PollCtx::invoke_callback (napi_env env, const int events) const {
 // Napi will invoke this once it's done with the Buffer, in case we wanted to
 // free ptr.  In this case, ptr is a PollCtx that we're not done with and don't
 // want to free yet (not until PollStop is invoked), so we do nothing.
-static void wrap_pointer_cb(void * /* data */, void* /* hint */) {}
+static void wrap_pointer_cb(napi_env, void * /* data */, void* /* hint */) {}
 
 napi_value PollCtx::WrapPointer (napi_env env, void* ptr, size_t length) {
   napi_status status;
