@@ -12,10 +12,13 @@
       ],
       'include_dirs': [
         "<!(node -e \"require('nan')\")",
+        "<!(node -p \"require('node-api').include\")",
       ],
       'conditions': [
         ['use_system_libnanomsg=="false"', {
-          'dependencies': [ 'deps/nanomsg.gyp:nanomsg', ],
+          'dependencies': [ 'deps/nanomsg.gyp:nanomsg' ],
+          'cflags!': [ '-fno-exceptions' ],
+          'cflags_cc!': [ '-fno-exceptions' ]
         }],
         ['OS=="linux" and use_system_libnanomsg=="true"', {
           'include_dirs+': [
@@ -26,6 +29,9 @@
             '<!@(pkg-config nanomsg --libs || echo "")',
             '<!@(pkg-config libnanomsg --libs || echo "")',
           ],
+          'dependencies': [ "<!(node -p \"require('node-api').gyp\")" ],
+          'cflags!': [ '-fno-exceptions' ],
+          'cflags_cc!': [ '-fno-exceptions' ]
         }],
         ['OS=="mac" and use_system_libnanomsg=="true"', {
           'include_dirs+': [
