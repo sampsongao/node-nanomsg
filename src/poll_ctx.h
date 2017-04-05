@@ -1,6 +1,8 @@
 #pragma once
 
 #include <nan.h>
+#include <napi.h>
+
 
 class PollCtx {
   private:
