@@ -2,7 +2,7 @@
 
 #include <nan.h>
 #include <napi.h>
-
+#include <uv.h>
 
 class PollCtx {
   private:
