@@ -11,185 +11,179 @@
 #include "tcp.h"
 #include "ws.h"
 
-using v8::Function;
-using v8::FunctionTemplate;
-using v8::Local;
-using v8::Number;
-using v8::Object;
-using v8::String;
-using v8::Value;
+using Napi::Function;
+using Napi::FunctionReference;
+using Napi::Number;
+using Napi::Object;
+using Napi::String;
+using Napi::Value;
 
-NAN_METHOD(Socket) {
-  int domain = Nan::To<int>(info[0]).FromJust();
-  int protocol = Nan::To<int>(info[1]).FromJust();
+Napi::Value Socket(const Napi::CallbackInfo& info) {
+  int domain = info[0].As<Napi::Number>().Int32Value();
+  int protocol = info[1].As<Napi::Number>().Int32Value();
 
-  info.GetReturnValue().Set(Nan::New<Number>(nn_socket(domain, protocol)));
+  return Napi::Number::New(info.Env(), nn_socket(domain, protocol));
 }
 
-NAN_METHOD(Close) {
-  int s = Nan::To<int>(info[0]).FromJust();
+Napi::Value Close(const Napi::CallbackInfo& info) {
+  int s = info[0].As<Napi::Number>().Int32Value();
   int rc = 0;
 
   do {
     rc = nn_close(s);
   } while (rc < 0 && errno == EINTR);
 
-  info.GetReturnValue().Set(Nan::New<Number>(rc));
+  return Napi::Number::New(info.Env(), rc);
 }
 
-NAN_METHOD(Setopt) {
-  int s = Nan::To<int>(info[0]).FromJust();
-  int level = Nan::To<int>(info[1]).FromJust();
-  int option = Nan::To<int>(info[2]).FromJust();
-  int optval = Nan::To<int>(info[3]).FromJust();
+Napi::Value Setopt(const Napi::CallbackInfo& info) {
+  int s = info[0].As<Napi::Number>().Int32Value();
+  int level = info[1].As<Napi::Number>().Int32Value();
+  int option = info[2].As<Napi::Number>().Int32Value();
+  int optval = info[3].As<Napi::Number>().Int32Value();
 
-  info.GetReturnValue().Set(Nan::New<Number>(
-      nn_setsockopt(s, level, option, &optval, sizeof(optval))));
+  return Napi::Number::New(info.Env(), 
+      nn_setsockopt(s, level, option, &optval, sizeof(optval)));
 }
 
-NAN_METHOD(Getopt) {
-  int s = Nan::To<int>(info[0]).FromJust();
-  int level = Nan::To<int>(info[1]).FromJust();
-  int option = Nan::To<int>(info[2]).FromJust();
+Napi::Value Getopt(const Napi::CallbackInfo& info) {
+  int s = info[0].As<Napi::Number>().Int32Value();
+  int level = info[1].As<Napi::Number>().Int32Value();
+  int option = info[2].As<Napi::Number>().Int32Value();
   int optval;
   size_t optsize = sizeof(optval);
 
   // check if the function succeeds
   if (nn_getsockopt(s, level, option, &optval, &optsize) == 0) {
-    info.GetReturnValue().Set(Nan::New<Number>(optval));
+    return Napi::Number::New(info.Env(), optval);
   }
 }
 
-NAN_METHOD(Chan) {
-  int s = Nan::To<int>(info[0]).FromJust();
+Napi::Value Chan(const Napi::CallbackInfo& info) {
+  int s = info[0].As<Napi::Number>().Int32Value();
   int level = NN_SUB;
-  int option = Nan::To<int>(info[1]).FromJust();
-  String::Utf8Value str(info[2]);
+  int option = info[1].As<Napi::Number>().Int32Value();
+  Napi::String str(info.Env(), info[2]);
 
-  info.GetReturnValue().Set(
-      Nan::New<Number>(nn_setsockopt(s, level, option, *str, str.length())));
+  return 
+      Napi::Number::New(info.Env(), nn_setsockopt(s, level, option, *str, str.Length()));
 }
 
-NAN_METHOD(Bind) {
-  int s = Nan::To<int>(info[0]).FromJust();
-  String::Utf8Value addr(info[1]);
+Napi::Value Bind(const Napi::CallbackInfo& info) {
+  int s = info[0].As<Napi::Number>().Int32Value();
+  Napi::String addr(info.Env(), info[1]);
 
-  info.GetReturnValue().Set(Nan::New<Number>(nn_bind(s, *addr)));
+  return Napi::Number::New(info.Env(), nn_bind(s, *addr));
 }
 
-NAN_METHOD(Connect) {
-  int s = Nan::To<int>(info[0]).FromJust();
-  String::Utf8Value addr(info[1]);
+Napi::Value Connect(const Napi::CallbackInfo& info) {
+  int s = info[0].As<Napi::Number>().Int32Value();
+  Napi::String addr(info.Env(), info[1]);
 
-  info.GetReturnValue().Set(Nan::New<Number>(nn_connect(s, *addr)));
+  return Napi::Number::New(info.Env(), nn_connect(s, *addr));
 }
 
-NAN_METHOD(Shutdown) {
-  int s = Nan::To<int>(info[0]).FromJust();
-  int how = Nan::To<int>(info[1]).FromJust();
+Napi::Value Shutdown(const Napi::CallbackInfo& info) {
+  int s = info[0].As<Napi::Number>().Int32Value();
+  int how = info[1].As<Napi::Number>().Int32Value();
 
-  info.GetReturnValue().Set(Nan::New<Number>(nn_shutdown(s, how)));
+  return Napi::Number::New(info.Env(), nn_shutdown(s, how));
 }
 
-NAN_METHOD(Send) {
-  int s = Nan::To<int>(info[0]).FromJust();
-  int flags = Nan::To<int>(info[2]).FromJust();
+Napi::Value Send(const Napi::CallbackInfo& info) {
+  int s = info[0].As<Napi::Number>().Int32Value();
+  int flags = info[2].As<Napi::Number>().Int32Value();
 
-  if (node::Buffer::HasInstance(info[1])) {
-    info.GetReturnValue().Set(Nan::New<Number>(nn_send(
-        s, node::Buffer::Data(info[1]), node::Buffer::Length(info[1]), flags)));
+  if (info[1].IsBuffer()) {
+    return Napi::Number::New(info.Env(), nn_send(
+        s, info[1].As<Napi::Buffer<char>>().Data(), info[1].As<Napi::Buffer<char>>().Length(), flags));
   } else {
-    String::Utf8Value str(info[1]);
-    info.GetReturnValue().Set(
-        Nan::New<Number>(nn_send(s, *str, str.length(), flags)));
+    Napi::String str(info.Env(), info[1]);
+    return 
+        Napi::Number::New(info.Env(), nn_send(s, *str, str.Length(), flags));
   }
 }
 
-static void fcb(char *data, void *) {
+static void fcb(napi_env env, void* data, void *) {
   nn_freemsg(data);
 }
 
-NAN_METHOD(Recv) {
-  int s = Nan::To<int>(info[0]).FromJust();
-  int flags = Nan::To<int>(info[1]).FromJust();
+Napi::Value Recv(const Napi::CallbackInfo& info) {
+  int s = info[0].As<Napi::Number>().Int32Value();
+  int flags = info[1].As<Napi::Number>().Int32Value();
 
   // Invoke nanomsg function.
   char *buf = NULL;
   int len = nn_recv(s, &buf, NN_MSG, flags);
 
-  if (len > -1) {
-    Local<Object> h = Nan::NewBuffer(buf, len, fcb, 0).ToLocalChecked();
-    info.GetReturnValue().Set(h);
+  if (len > 0) {
+    Napi::Object h = Napi::Buffer<char>::New(info.Env(), buf, static_cast<size_t>(len), fcb, 0);
+    return h;
   } else {
-    info.GetReturnValue().Set(Nan::New<Number>(len));
+    return Napi::Number::New(info.Env(), len);
   }
 }
 
-NAN_METHOD(SymbolInfo) {
-  int s = Nan::To<int>(info[0]).FromJust();
+Napi::Value SymbolInfo(const Napi::CallbackInfo& info) {
+  int s = info[0].As<Napi::Number>().Int32Value();
   struct nn_symbol_properties prop;
   int ret = nn_symbol_info(s, &prop, sizeof(prop));
 
   if (ret > 0) {
-    Local<Object> obj = Nan::New<Object>();
-    Nan::Set(obj, Nan::New("value").ToLocalChecked(),
-             Nan::New<Number>(prop.value));
-    Nan::Set(obj, Nan::New("ns").ToLocalChecked(), Nan::New<Number>(prop.ns));
-    Nan::Set(obj, Nan::New("type").ToLocalChecked(),
-             Nan::New<Number>(prop.type));
-    Nan::Set(obj, Nan::New("unit").ToLocalChecked(),
-             Nan::New<Number>(prop.unit));
-    Nan::Set(obj, Nan::New("name").ToLocalChecked(),
-             Nan::New<String>(prop.name).ToLocalChecked());
-    info.GetReturnValue().Set(obj);
+    Napi::Object obj = Napi::Object::New(info.Env());
+    obj.Set(Napi::String::New(info.Env(), "value"), Napi::Number::New(info.Env(), prop.value));
+    obj.Set(Napi::String::New(info.Env(), "ns"), Napi::Number::New(info.Env(), prop.ns));
+    obj.Set(Napi::String::New(info.Env(), "type"), Napi::Number::New(info.Env(), prop.type));
+    obj.Set(Napi::String::New(info.Env(), "unit"), Napi::Number::New(info.Env(), prop.unit));
+    obj.Set(Napi::String::New(info.Env(), "name"), Napi::String::New(info.Env(), prop.name));
+    return obj;
   } else if (ret != 0) {
-    Nan::ThrowError(nn_strerror(nn_errno()));
+    Napi::Error::New(info.Env(), nn_strerror(nn_errno())).ThrowAsJavaScriptException();
   }
 }
 
-NAN_METHOD(Symbol) {
-  int s = Nan::To<int>(info[0]).FromJust();
+Napi::Value Symbol(const Napi::CallbackInfo& info) {
+  int s = info[0].As<Napi::Number>().Int32Value();
   int val;
   const char *ret = nn_symbol(s, &val);
 
   if (ret) {
-    Local<Object> obj = Nan::New<Object>();
-    Nan::Set(obj, Nan::New("value").ToLocalChecked(), Nan::New<Number>(val));
-    Nan::Set(obj, Nan::New("name").ToLocalChecked(),
-             Nan::New<String>(ret).ToLocalChecked());
-    info.GetReturnValue().Set(obj);
+    Napi::Object obj = Napi::Object::New(info.Env());
+    obj.Set(Napi::String::New(info.Env(), "value"), Napi::Number::New(info.Env(), val));
+    obj.Set(Napi::String::New(info.Env(), "name"), Napi::String::New(info.Env(), ret));
+    return obj;
   } else {
     // symbol index out of range
     // this behaviour seems inconsistent with SymbolInfo() above
     // but we are faithfully following the libnanomsg API, warta and all
-    Nan::ThrowError(nn_strerror(nn_errno())); // EINVAL
+    Napi::Error::New(info.Env(), nn_strerror(nn_errno())).ThrowAsJavaScriptException(); // EINVAL
   }
 }
 
-NAN_METHOD(Term) { nn_term(); }
+void Term(const Napi::CallbackInfo& info) { nn_term(); }
 
 // Pass in two sockets, or (socket, -1) or (-1, socket) for loopback
-NAN_METHOD(Device) {
-  int s1 = Nan::To<int>(info[0]).FromJust();
-  int s2 = Nan::To<int>(info[1]).FromJust();
+void Device(const Napi::CallbackInfo& info) {
+  int s1 = info[0].As<Napi::Number>().Int32Value();
+  int s2 = info[1].As<Napi::Number>().Int32Value();
 
   // nn_device only returns when it encounters an error
   nn_device(s1, s2);
-  Nan::ThrowError(nn_strerror(nn_errno()));
+  Napi::Error::New(info.Env(), nn_strerror(nn_errno())).ThrowAsJavaScriptException();
 }
 
-NAN_METHOD(Errno) { info.GetReturnValue().Set(Nan::New<Number>(nn_errno())); }
+Napi::Value Errno(const Napi::CallbackInfo& info) { return Napi::Number::New(info.Env(), nn_errno()); }
 
-NAN_METHOD(Err) {
-  info.GetReturnValue().Set(Nan::New(nn_strerror(nn_errno())).ToLocalChecked());
+Napi::Value Err(const Napi::CallbackInfo& info) {
+  return Napi::String::New(info.Env(), nn_strerror(nn_errno()));
 }
 
-NAN_METHOD(PollSocket) {
-  const int s = Nan::To<int>(info[0]).FromJust();
-  const bool is_sender = Nan::To<bool>(info[1]).FromJust();
-  const Local<Function> cb = info[2].As<Function>();
+Napi::Value PollSocket(const Napi::CallbackInfo& info) {
+  const int s = info[0].As<Napi::Number>().Int32Value();
+  const bool is_sender = info[1].As<Napi::Boolean>().Value();
+  const Napi::Function cb = info[2].As<Function>();
   PollCtx *context = new PollCtx(s, is_sender, cb);
-  info.GetReturnValue().Set(PollCtx::WrapPointer(context, sizeof context));
+  return PollCtx::WrapPointer(info.Env(), context, sizeof context);
 }
 
 static void close_cb(uv_handle_t *handle) {
@@ -197,7 +191,7 @@ static void close_cb(uv_handle_t *handle) {
   delete context;
 }
 
-NAN_METHOD(PollStop) {
+void PollStop(const Napi::CallbackInfo& info) {
   PollCtx* const context = PollCtx::UnwrapPointer(info[0]);
   if (context != NULL) {
     uv_close(reinterpret_cast<uv_handle_t*>(&context->poll_handle), close_cb);
@@ -206,10 +200,10 @@ NAN_METHOD(PollStop) {
   // something.
 }
 
-class NanomsgDeviceWorker : public Nan::AsyncWorker {
+class NanomsgDeviceWorker : public Napi::AsyncWorker {
 public:
-  NanomsgDeviceWorker(Nan::Callback *callback, int s1, int s2)
-      : Nan::AsyncWorker(callback), s1(s1), s2(s2) {}
+  NanomsgDeviceWorker(Napi::Env env, Napi::Function callback, int s1, int s2)
+      : Napi::AsyncWorker(callback), s1(s1), s2(s2) {}
   ~NanomsgDeviceWorker() {}
 
   // Executed inside the worker-thread.
@@ -225,12 +219,10 @@ public:
   // Executed when the async work is complete
   // this function will be run inside the main event loop
   // so it is safe to use V8 again
-  void HandleOKCallback() {
-    Nan::HandleScope scope;
+  void OnOK() {
+    Napi::HandleScope scope(Env());
 
-    Local<Value> argv[] = { Nan::New<Number>(err) };
-
-    callback->Call(1, argv);
+    _callback.MakeCallback({ Napi::Number::New(Env(), err) });
   };
 
 private:
@@ -240,41 +232,42 @@ private:
 };
 
 // Asynchronous access to the `nn_device()` function
-NAN_METHOD(DeviceWorker) {
-  int s1 = Nan::To<int>(info[0]).FromJust();
-  int s2 = Nan::To<int>(info[1]).FromJust();
-  Nan::Callback *callback = new Nan::Callback(info[2].As<Function>());
+void DeviceWorker(const Napi::CallbackInfo& info) {
+  int s1 = info[0].As<Napi::Number>().Int32Value();
+  int s2 = info[1].As<Napi::Number>().Int32Value();
+  Napi::Function *callback = new Napi::Function(info[2].As<Function>());
 
-  Nan::AsyncQueueWorker(new NanomsgDeviceWorker(callback, s1, s2));
+  NanomsgDeviceWorker* worker = new NanomsgDeviceWorker(info.Env(), *callback, s1, s2);
+  worker->Queue();
 }
 
 #define EXPORT_METHOD(C, S)                                            \
-  Nan::Set(C, Nan::New(#S).ToLocalChecked(),                           \
-    Nan::GetFunction(Nan::New<FunctionTemplate>(S)).ToLocalChecked());
+  C.Set(Napi::String::New(env, #S),                           \
+    Napi::Function::New(env, S));
 
-NAN_MODULE_INIT(InitAll) {
-  Nan::HandleScope scope;
+void InitAll(Napi::Env env, Napi::Object exports, Napi::Object module) {
+  Napi::HandleScope scope(env);
 
   // Export functions.
-  EXPORT_METHOD(target, Socket);
-  EXPORT_METHOD(target, Close);
-  EXPORT_METHOD(target, Chan);
-  EXPORT_METHOD(target, Bind);
-  EXPORT_METHOD(target, Connect);
-  EXPORT_METHOD(target, Shutdown);
-  EXPORT_METHOD(target, Send);
-  EXPORT_METHOD(target, Recv);
-  EXPORT_METHOD(target, Errno);
-  EXPORT_METHOD(target, PollSocket);
-  EXPORT_METHOD(target, PollStop);
-  EXPORT_METHOD(target, DeviceWorker);
-  EXPORT_METHOD(target, SymbolInfo);
-  EXPORT_METHOD(target, Symbol);
-  EXPORT_METHOD(target, Term);
+  EXPORT_METHOD(exports, Socket);
+  EXPORT_METHOD(exports, Close);
+  EXPORT_METHOD(exports, Chan);
+  EXPORT_METHOD(exports, Bind);
+  EXPORT_METHOD(exports, Connect);
+  EXPORT_METHOD(exports, Shutdown);
+  EXPORT_METHOD(exports, Send);
+  EXPORT_METHOD(exports, Recv);
+  EXPORT_METHOD(exports, Errno);
+  EXPORT_METHOD(exports, PollSocket);
+  EXPORT_METHOD(exports, PollStop);
+  EXPORT_METHOD(exports, DeviceWorker);
+  EXPORT_METHOD(exports, SymbolInfo);
+  EXPORT_METHOD(exports, Symbol);
+  EXPORT_METHOD(exports, Term);
 
-  EXPORT_METHOD(target, Getopt);
-  EXPORT_METHOD(target, Setopt);
-  EXPORT_METHOD(target, Err);
+  EXPORT_METHOD(exports, Getopt);
+  EXPORT_METHOD(exports, Setopt);
+  EXPORT_METHOD(exports, Err);
 
   // Export symbols.
   for (int i = 0;; ++i) {
@@ -283,9 +276,8 @@ NAN_MODULE_INIT(InitAll) {
     if (symbol_name == NULL) {
       break;
     }
-    Nan::Set(target, Nan::New(symbol_name).ToLocalChecked(),
-             Nan::New<Number>(value));
+    exports.Set(Napi::String::New(env, symbol_name), Napi::Number::New(env, value));
   }
 }
 
-NODE_MODULE(node_nanomsg, InitAll)
+NODE_API_MODULE(node_nanomsg, InitAll)
