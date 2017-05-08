@@ -14,10 +14,12 @@
 #define CHECK_STATUS                                \
   assert(status == napi_ok);
 
-#define BEGIN(n)                                    \
-  napi_status status;                               \
-  napi_value args[n];                               \
-  status = napi_get_cb_args(env, info, args, n);    \
+#define BEGIN(n)                                        \
+  napi_status status;                                   \
+  napi_value args[n];                                   \
+  size_t argc = n;                                      \
+  status = napi_get_cb_info(env, info, &argc, args,     \
+                            nullptr, nullptr);          \
   CHECK_STATUS;
 
 #endif
