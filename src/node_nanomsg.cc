@@ -14,7 +14,7 @@
 #include "macros.h"
 #include <string.h>
 
-NAPI_METHOD(Socket) {
+napi_value Socket(napi_env env, napi_callback_info info) {
   BEGIN(2);
 
   int domain;
@@ -26,11 +26,10 @@ NAPI_METHOD(Socket) {
   napi_value ret;
   status = napi_create_number(env, nn_socket(domain, protocol), &ret);
   CHECK_STATUS;
-  status = napi_set_return_value(env, info, ret);
-  CHECK_STATUS;
+  return ret;
 }
 
-NAPI_METHOD(Close) {
+napi_value Close(napi_env env, napi_callback_info info) {
   BEGIN(1);
   int s;
   status = napi_get_value_int32(env, args[0], &s);
@@ -44,11 +43,10 @@ NAPI_METHOD(Close) {
   napi_value ret;
   status = napi_create_number(env, rc, &ret);
   CHECK_STATUS;
-  status = napi_set_return_value(env, info, ret);
-  CHECK_STATUS;
+  return ret;
 }
 
-NAPI_METHOD(Setopt) {
+napi_value Setopt(napi_env env, napi_callback_info info) {
   BEGIN(4);
   int s;
   status = napi_get_value_int32(env, args[0], &s);
@@ -67,11 +65,10 @@ NAPI_METHOD(Setopt) {
   napi_value ret;
   status = napi_create_number(env, result, &ret);
   CHECK_STATUS;
-  status = napi_set_return_value(env, info, ret);
-  CHECK_STATUS;
+  return ret;
 }
 
-NAPI_METHOD(Getopt) {
+napi_value Getopt(napi_env env, napi_callback_info info) {
   BEGIN(4);
   int s;
   status = napi_get_value_int32(env, args[0], &s);
@@ -90,12 +87,11 @@ NAPI_METHOD(Getopt) {
     napi_value ret;
     status = napi_create_number(env, optval, &ret);
     CHECK_STATUS;
-    status = napi_set_return_value(env, info, ret);
-    CHECK_STATUS;
+    return ret;
   }
 }
 
-NAPI_METHOD(Chan) {
+napi_value Chan(napi_env env, napi_callback_info info) {
   BEGIN(3);
   int s;
   status = napi_get_value_int32(env, args[0], &s);
@@ -108,19 +104,15 @@ NAPI_METHOD(Chan) {
   size_t copied;
   status = napi_get_value_string_utf8(env, args[2], str, 1024, &copied);
   CHECK_STATUS;
-  size_t length;
-  status = napi_get_value_string_length(env, args[2], &length);
-  CHECK_STATUS;
 
-  int result = nn_setsockopt(s, level, option, str, length);
+  int result = nn_setsockopt(s, level, option, str, copied);
   napi_value ret;
   status = napi_create_number(env, result, &ret);
   CHECK_STATUS;
-  status = napi_set_return_value(env, info, ret);
-  CHECK_STATUS;
+  return ret;
 }
 
-NAPI_METHOD(Bind) {
+napi_value Bind(napi_env env, napi_callback_info info) {
   BEGIN(2);
   int s;
   status = napi_get_value_int32(env, args[0], &s);
@@ -132,11 +124,10 @@ NAPI_METHOD(Bind) {
   napi_value ret;
   status = napi_create_number(env, nn_bind(s, addr), &ret);
   CHECK_STATUS;
-  status = napi_set_return_value(env, info, ret);
-  CHECK_STATUS;
+  return ret;
 }
 
-NAPI_METHOD(Connect) {
+napi_value Connect(napi_env env, napi_callback_info info) {
   BEGIN(2);
   int s;
   status = napi_get_value_int32(env, args[0], &s);
@@ -149,11 +140,10 @@ NAPI_METHOD(Connect) {
   napi_value ret;
   status = napi_create_number(env, nn_connect(s, addr), &ret);
   CHECK_STATUS;
-  status = napi_set_return_value(env, info, ret);
-  CHECK_STATUS;
+  return ret;
 }
 
-NAPI_METHOD(Shutdown) {
+napi_value Shutdown(napi_env env, napi_callback_info info) {
   BEGIN(2);
   int s;
   status = napi_get_value_int32(env, args[0], &s);
@@ -165,11 +155,10 @@ NAPI_METHOD(Shutdown) {
   napi_value ret;
   status = napi_create_number(env, nn_shutdown(s, how), &ret);
   CHECK_STATUS;
-  status = napi_set_return_value(env, info, ret);
-  CHECK_STATUS;
+  return ret;
 }
 
-NAPI_METHOD(Send) {
+napi_value Send(napi_env env, napi_callback_info info) {
   BEGIN(3);
   int s;
   status = napi_get_value_int32(env, args[0], &s);
@@ -191,8 +180,7 @@ NAPI_METHOD(Send) {
     napi_value ret;
     status = napi_create_number(env, result, &ret);
     CHECK_STATUS;
-    status = napi_set_return_value(env, info, ret);
-    CHECK_STATUS;
+    return ret;
   } else {
     napi_value string;
     status = napi_coerce_to_string(env, args[1], &string);
@@ -206,8 +194,7 @@ NAPI_METHOD(Send) {
     napi_value ret;
     status = napi_create_number(env, result, &ret);
     CHECK_STATUS;
-    status = napi_set_return_value(env, info, ret);
-    CHECK_STATUS;
+    return ret;
   }
 }
 
@@ -215,7 +202,7 @@ static void fcb(char *data, void *) {
   nn_freemsg(data);
 }
 
-NAPI_METHOD(Recv) {
+napi_value Recv(napi_env env, napi_callback_info info) {
   BEGIN(2);
   int s;
   status = napi_get_value_int32(env, args[0], &s);
@@ -228,22 +215,20 @@ NAPI_METHOD(Recv) {
   const int len = nn_recv(s, &buf, NN_MSG, flags);
 
   if (len > -1) {
-    napi_value h;
+    napi_value ret;
     status = napi_create_buffer_copy(env, static_cast<const size_t>(len),
-                                     buf, NULL, &h);
+                                     buf, NULL, &ret);
     CHECK_STATUS;
-    status = napi_set_return_value(env, info, h);
-    CHECK_STATUS;
+    return ret;
   } else {
     napi_value ret;
     status = napi_create_number(env, len, &ret);
     CHECK_STATUS;
-    status = napi_set_return_value(env, info, ret);
-    CHECK_STATUS;
+    return ret;
   }
 }
 
-NAPI_METHOD(SymbolInfo) {
+napi_value SymbolInfo(napi_env env, napi_callback_info info) {
   BEGIN(1);
   int s;
   status = napi_get_value_int32(env, args[0], &s);
@@ -288,15 +273,14 @@ NAPI_METHOD(SymbolInfo) {
     status = napi_set_property(env, obj, pro, val);
     CHECK_STATUS
 
-    status = napi_set_return_value(env, info, obj);
-    CHECK_STATUS
+    return obj;
   } else if (ret != 0) {
     status = napi_throw_error(env, (char*) nn_strerror(nn_errno()));
     CHECK_STATUS
   }
 }
 
-NAPI_METHOD(Symbol) {
+napi_value Symbol(napi_env env, napi_callback_info info) {
   BEGIN(1);
   int s;
   status = napi_get_value_int32(env, args[0], &s);
@@ -322,8 +306,7 @@ NAPI_METHOD(Symbol) {
     CHECK_STATUS;
     status = napi_set_property(env, obj, pro, val);
     CHECK_STATUS;
-    status = napi_set_return_value(env, info, obj);
-    CHECK_STATUS;
+    return obj;
   } else {
     // symbol index out of range
     // this behaviour seems inconsistent with SymbolInfo() above
@@ -333,10 +316,10 @@ NAPI_METHOD(Symbol) {
   }
 }
 
-NAPI_METHOD(Term) { nn_term(); }
+napi_value Term(napi_env env, napi_callback_info info) { nn_term(); }
 
 // Pass in two sockets, or (socket, -1) or (-1, socket) for loopback
-NAPI_METHOD(Device) {
+void Device(napi_env env, napi_callback_info info) {
   BEGIN(2);
   int s1;
   status = napi_get_value_int32(env, args[0], &s1);
@@ -351,25 +334,23 @@ NAPI_METHOD(Device) {
   CHECK_STATUS;
 }
 
-NAPI_METHOD(Errno) {
+napi_value Errno(napi_env env, napi_callback_info info) {
   napi_status status;
   napi_value ret;
   status = napi_create_number(env, nn_errno(), &ret);
   CHECK_STATUS;
-  status = napi_set_return_value(env, info, ret);
-  CHECK_STATUS;
+  return ret;
 }
 
-NAPI_METHOD(Err) {
+napi_value Err(napi_env env, napi_callback_info info) {
   napi_status status;
   napi_value str;
   status = napi_create_string_utf8(env, (char*) nn_strerror(nn_errno()), -1, &str);
   CHECK_STATUS;
-  status = napi_set_return_value(env, info, str);
-  CHECK_STATUS;
+  return str;
 }
 
-NAPI_METHOD(PollSocket) {
+napi_value PollSocket(napi_env env, napi_callback_info info) {
   BEGIN(3);
   int s;
   status = napi_get_value_int32(env, args[0], &s);
@@ -379,8 +360,7 @@ NAPI_METHOD(PollSocket) {
   CHECK_STATUS;
   PollCtx *context = new PollCtx(env, s, is_sender, args[2]);
   napi_value ret = PollCtx::WrapPointer(env, context, sizeof context);
-  status = napi_set_return_value(env, info, ret);
-  CHECK_STATUS;
+  return ret;
 }
 
 static void close_cb(uv_handle_t *handle) {
@@ -388,7 +368,7 @@ static void close_cb(uv_handle_t *handle) {
   delete context;
 }
 
-NAPI_METHOD(PollStop) {
+napi_value PollStop(napi_env env, napi_callback_info info) {
   BEGIN(1);
   PollCtx* const context = PollCtx::UnwrapPointer(env, args[0]);
   if (context != NULL) {
@@ -528,11 +508,8 @@ private:
 };
 
 // Asynchronous access to the `nn_device()` function
-NAPI_METHOD(DeviceWorker) {
-  napi_status status;
-  napi_value args[3];
-  status = napi_get_cb_args(env, info, args, 3);
-  CHECK_STATUS;
+napi_value DeviceWorker(napi_env env, napi_callback_info info) {
+  BEGIN(3);
 
   int s1;
   status = napi_get_value_int32(env, args[0], &s1);
