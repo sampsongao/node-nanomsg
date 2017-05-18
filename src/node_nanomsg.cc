@@ -524,13 +524,13 @@ napi_value DeviceWorker(napi_env env, napi_callback_info info) {
 #define EXPORT_METHOD(C, S)                                            \
   status = napi_create_string_utf8(env, #S, -1, &pro);                 \
   CHECK_STATUS;                                                        \
-  status = napi_create_function(env, #C, S, nullptr, &val);             \
+  status = napi_create_function(env, #C, S, nullptr, &val);            \
   CHECK_STATUS;                                                        \
   status = napi_set_property(env, C, pro, val);                        \
   CHECK_STATUS;
 
 
-NAPI_MODULE_INIT(InitAll) {
+void InitAll(napi_env env, napi_value exports, napi_value module, void* priv) {
   napi_status status;
   napi_handle_scope scope;
   status = napi_open_handle_scope(env, &scope);
