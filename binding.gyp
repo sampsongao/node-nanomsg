@@ -11,7 +11,6 @@
         'src/poll_ctx.cc'
       ],
       'include_dirs': [
-        "<!(node -e \"require('nan')\")",
       ],
       'conditions': [
         ['use_system_libnanomsg=="false"', {
