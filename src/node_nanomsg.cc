@@ -66,21 +66,20 @@ Napi::Value Chan(const Napi::CallbackInfo& info) {
   Napi::String str(info.Env(), info[2]);
 
   return 
-      Napi::Number::New(info.Env(), nn_setsockopt(s, level, option, *str, str.Length()));
+      Napi::Number::New(info.Env(), nn_setsockopt(s, level, option, str.Utf8Value().c_str(), str.Utf8Value().length()));
 }
 
 Napi::Value Bind(const Napi::CallbackInfo& info) {
   int s = info[0].As<Napi::Number>().Int32Value();
   Napi::String addr(info.Env(), info[1]);
-
-  return Napi::Number::New(info.Env(), nn_bind(s, *addr));
+  return Napi::Number::New(info.Env(), nn_bind(s, addr.Utf8Value().c_str()));
 }
 
 Napi::Value Connect(const Napi::CallbackInfo& info) {
   int s = info[0].As<Napi::Number>().Int32Value();
   Napi::String addr(info.Env(), info[1]);
 
-  return Napi::Number::New(info.Env(), nn_connect(s, *addr));
+  return Napi::Number::New(info.Env(), nn_connect(s, addr.Utf8Value().c_str()));
 }
 
 Napi::Value Shutdown(const Napi::CallbackInfo& info) {
@@ -98,13 +97,13 @@ Napi::Value Send(const Napi::CallbackInfo& info) {
     return Napi::Number::New(info.Env(), nn_send(
         s, info[1].As<Napi::Buffer<char>>().Data(), info[1].As<Napi::Buffer<char>>().Length(), flags));
   } else {
-    Napi::String str(info.Env(), info[1]);
+    Napi::String str = info[1].ToString();
     return 
-        Napi::Number::New(info.Env(), nn_send(s, *str, str.Length(), flags));
+        Napi::Number::New(info.Env(), nn_send(s, str.Utf8Value().c_str(), str.Utf8Value().length(), flags));
   }
 }
 
-static void fcb(napi_env env, void* data, void *) {
+static void fcb(napi_env env, char* data/*, void* hint*/) {
   nn_freemsg(data);
 }
 
@@ -117,7 +116,7 @@ Napi::Value Recv(const Napi::CallbackInfo& info) {
   int len = nn_recv(s, &buf, NN_MSG, flags);
 
   if (len > 0) {
-    Napi::Object h = Napi::Buffer<char>::New(info.Env(), buf, static_cast<size_t>(len), fcb, 0);
+    Napi::Object h = Napi::Buffer<char>::New(info.Env(), buf, static_cast<size_t>(len), fcb);
     return h;
   } else {
     return Napi::Number::New(info.Env(), len);
@@ -140,6 +139,7 @@ Napi::Value SymbolInfo(const Napi::CallbackInfo& info) {
   } else if (ret != 0) {
     Napi::Error::New(info.Env(), nn_strerror(nn_errno())).ThrowAsJavaScriptException();
   }
+  return info.Env().Null();
 }
 
 Napi::Value Symbol(const Napi::CallbackInfo& info) {
@@ -202,7 +202,7 @@ void PollStop(const Napi::CallbackInfo& info) {
 
 class NanomsgDeviceWorker : public Napi::AsyncWorker {
 public:
-  NanomsgDeviceWorker(Napi::Env env, Napi::Function callback, int s1, int s2)
+  NanomsgDeviceWorker(Napi::Function callback, int s1, int s2)
       : Napi::AsyncWorker(callback), s1(s1), s2(s2) {}
   ~NanomsgDeviceWorker() {}
 
@@ -222,7 +222,7 @@ public:
   void OnOK() {
     Napi::HandleScope scope(Env());
 
-    _callback.MakeCallback({ Napi::Number::New(Env(), err) });
+    Callback().MakeCallback(Env().Global(), { Napi::Number::New(Env(), err) });
   };
 
 private:
@@ -235,15 +235,16 @@ private:
 void DeviceWorker(const Napi::CallbackInfo& info) {
   int s1 = info[0].As<Napi::Number>().Int32Value();
   int s2 = info[1].As<Napi::Number>().Int32Value();
-  Napi::Function *callback = new Napi::Function(info[2].As<Function>());
+  Napi::Function callback = info[2].As<Function>();
 
-  NanomsgDeviceWorker* worker = new NanomsgDeviceWorker(info.Env(), *callback, s1, s2);
+  NanomsgDeviceWorker* worker = new NanomsgDeviceWorker(callback, s1, s2);
   worker->Queue();
 }
 
 #define EXPORT_METHOD(C, S)                                            \
-  C.Set(Napi::String::New(env, #S),                           \
+  C.Set(Napi::String::New(env, #S),                                    \
     Napi::Function::New(env, S));
+
 
 void InitAll(Napi::Env env, Napi::Object exports, Napi::Object module) {
   Napi::HandleScope scope(env);

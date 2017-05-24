@@ -5,8 +5,7 @@
   "main": "lib/index.js",
   "dependencies": {
     "bindings": "1.2.1",
-    "nan": "2.4",
-    "node-api": "github:nodejs/node-api"
+    "node-addon-api": "github:nodejs/node-addon-api"
   },
   "devDependencies": {
     "buffer-equals-polyfill": "1.0.0",

@@ -1,12 +1,11 @@
 #pragma once
 
 #include <napi.h>
-#include <napi.h>
 #include <uv.h>
 
 class PollCtx {
   private:
-    const Napi::Function callback;
+    Napi::FunctionReference callback;
     uv_os_sock_t sockfd; // for libnanomsg
     void begin_poll (const int s, const bool is_sender);
   public:
