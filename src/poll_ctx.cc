@@ -23,16 +23,17 @@ void PollCtx::begin_poll (const int s, const bool is_sender) {
 }
 
 PollCtx::PollCtx (const int s, const bool is_sender,
-    const Napi::Function cb): callback(cb) {
+    const Napi::Function cb) {
   // TODO: maybe container_of can be used instead?
   // that would save us this assignment, and ugly static_cast hacks.
   poll_handle.data = this;
   begin_poll(s, is_sender);
+  callback.Reset(cb, 1);
 }
 
 void PollCtx::invoke_callback (const int events) const {
   Napi::HandleScope scope(callback.Env());
-  callback.MakeCallback({ Napi::Number::New(callback.Env(), events) });
+  callback.MakeCallback(callback.Env().Global(), { Napi::Number::New(callback.Env(), events) });
 }
 
 // Nan will invoke this once it's done with the Buffer, in case we wanted to
@@ -41,7 +42,7 @@ void PollCtx::invoke_callback (const int events) const {
 static void wrap_pointer_cb(napi_env env, void * /* data */, void * /* hint */) {}
 
 Napi::Value PollCtx::WrapPointer (Napi::Env env, void* ptr, size_t length) {
-   return Napi::Buffer<char>::New(env, static_cast<char *>(ptr), length, wrap_pointer_cb, 0);
+   return Napi::Buffer<char>::New(env, static_cast<char *>(ptr), length);
 }
 
 PollCtx* PollCtx::UnwrapPointer (Napi::Value buffer) {

@@ -10,9 +10,11 @@
         'src/node_nanomsg.cc',
         'src/poll_ctx.cc'
       ],
+      'dependencies': [
+        '<!(node -p \'require("node-addon-api").gyp\')'
+      ],
       'include_dirs': [
-        "<!(node -e \"require('nan')\")",
-        "<!(node -p \"require('node-api').include\")",
+        '<!@(node -p \'require("node-addon-api").include\')'
       ],
       'conditions': [
         ['use_system_libnanomsg=="false"', {
