@@ -31,7 +31,6 @@
             '<!@(pkg-config nanomsg --libs || echo "")',
             '<!@(pkg-config libnanomsg --libs || echo "")',
           ],
-          'dependencies': [ "<!(node -p \"require('node-api').gyp\")" ],
           'cflags!': [ '-fno-exceptions' ],
           'cflags_cc!': [ '-fno-exceptions' ]
         }],
