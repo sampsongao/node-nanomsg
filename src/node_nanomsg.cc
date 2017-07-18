@@ -275,7 +275,7 @@ napi_value SymbolInfo(napi_env env, napi_callback_info info) {
 
     return obj;
   } else if (ret != 0) {
-    status = napi_throw_error(env, (char*) nn_strerror(nn_errno()));
+    status = napi_throw_error(env, nullptr, (char*) nn_strerror(nn_errno()));
     CHECK_STATUS
   }
 }
@@ -311,7 +311,7 @@ napi_value Symbol(napi_env env, napi_callback_info info) {
     // symbol index out of range
     // this behaviour seems inconsistent with SymbolInfo() above
     // but we are faithfully following the libnanomsg API, warta and all
-    status = napi_throw_error(env, (char*) nn_strerror(nn_errno()));  // EINVAL
+    status = napi_throw_error(env, nullptr, (char*) nn_strerror(nn_errno()));  // EINVAL
     CHECK_STATUS;
   }
 }
@@ -330,7 +330,7 @@ void Device(napi_env env, napi_callback_info info) {
 
   // nn_device only returns when it encounters an error
   nn_device(s1, s2);
-  status = napi_throw_error(env, (char*) nn_strerror(nn_errno()));
+  status = napi_throw_error(env, nullptr, (char*) nn_strerror(nn_errno()));
   CHECK_STATUS;
 }
 
@@ -463,7 +463,7 @@ public:
     CHECK_STATUS;
 
     napi_value argv[1];
-    status = napi_create_error(env, s, argv);
+    status = napi_create_error(env, nullptr, s, argv);
     CHECK_STATUS;
 
     napi_value global;
