@@ -24,7 +24,7 @@ napi_value Socket(napi_env env, napi_callback_info info) {
   status = napi_get_value_int32(env, args[1], &protocol);
   CHECK_STATUS;
   napi_value ret;
-  status = napi_create_number(env, nn_socket(domain, protocol), &ret);
+  status = napi_create_double(env, nn_socket(domain, protocol), &ret);
   CHECK_STATUS;
   return ret;
 }
@@ -41,7 +41,7 @@ napi_value Close(napi_env env, napi_callback_info info) {
   } while (rc < 0 && errno == EINTR);
 
   napi_value ret;
-  status = napi_create_number(env, rc, &ret);
+  status = napi_create_double(env, rc, &ret);
   CHECK_STATUS;
   return ret;
 }
@@ -63,7 +63,7 @@ napi_value Setopt(napi_env env, napi_callback_info info) {
 
   int result = nn_setsockopt(s, level, option, &optval, sizeof(optval));
   napi_value ret;
-  status = napi_create_number(env, result, &ret);
+  status = napi_create_double(env, result, &ret);
   CHECK_STATUS;
   return ret;
 }
@@ -85,7 +85,7 @@ napi_value Getopt(napi_env env, napi_callback_info info) {
   // check if the function succeeds
   if (nn_getsockopt(s, level, option, &optval, &optsize) == 0) {
     napi_value ret;
-    status = napi_create_number(env, optval, &ret);
+    status = napi_create_double(env, optval, &ret);
     CHECK_STATUS;
     return ret;
   }
@@ -107,7 +107,7 @@ napi_value Chan(napi_env env, napi_callback_info info) {
 
   int result = nn_setsockopt(s, level, option, str, copied);
   napi_value ret;
-  status = napi_create_number(env, result, &ret);
+  status = napi_create_double(env, result, &ret);
   CHECK_STATUS;
   return ret;
 }
@@ -122,7 +122,7 @@ napi_value Bind(napi_env env, napi_callback_info info) {
   status = napi_get_value_string_utf8(env, args[1], addr, 1024, &copied);
   CHECK_STATUS;
   napi_value ret;
-  status = napi_create_number(env, nn_bind(s, addr), &ret);
+  status = napi_create_double(env, nn_bind(s, addr), &ret);
   CHECK_STATUS;
   return ret;
 }
@@ -138,7 +138,7 @@ napi_value Connect(napi_env env, napi_callback_info info) {
   CHECK_STATUS;
 
   napi_value ret;
-  status = napi_create_number(env, nn_connect(s, addr), &ret);
+  status = napi_create_double(env, nn_connect(s, addr), &ret);
   CHECK_STATUS;
   return ret;
 }
@@ -153,7 +153,7 @@ napi_value Shutdown(napi_env env, napi_callback_info info) {
   CHECK_STATUS;
 
   napi_value ret;
-  status = napi_create_number(env, nn_shutdown(s, how), &ret);
+  status = napi_create_double(env, nn_shutdown(s, how), &ret);
   CHECK_STATUS;
   return ret;
 }
@@ -178,7 +178,7 @@ napi_value Send(napi_env env, napi_callback_info info) {
     CHECK_STATUS;
     int result = nn_send(s, buf, size, flags);
     napi_value ret;
-    status = napi_create_number(env, result, &ret);
+    status = napi_create_double(env, result, &ret);
     CHECK_STATUS;
     return ret;
   } else {
@@ -192,7 +192,7 @@ napi_value Send(napi_env env, napi_callback_info info) {
     int length = strlen(str);
     int result = nn_send(s, str, length, flags);
     napi_value ret;
-    status = napi_create_number(env, result, &ret);
+    status = napi_create_double(env, result, &ret);
     CHECK_STATUS;
     return ret;
   }
@@ -222,7 +222,7 @@ napi_value Recv(napi_env env, napi_callback_info info) {
     return ret;
   } else {
     napi_value ret;
-    status = napi_create_number(env, len, &ret);
+    status = napi_create_double(env, len, &ret);
     CHECK_STATUS;
     return ret;
   }
@@ -244,25 +244,25 @@ napi_value SymbolInfo(napi_env env, napi_callback_info info) {
     napi_value val;
     status = napi_create_string_utf8(env, "value", -1, &pro);
     CHECK_STATUS;
-    status = napi_create_number(env, prop.value, &val);
+    status = napi_create_double(env, prop.value, &val);
     CHECK_STATUS;
     status = napi_set_property(env, obj, pro, val);
     CHECK_STATUS
     status = napi_create_string_utf8(env, "ns", -1, &pro);
     CHECK_STATUS;
-    status = napi_create_number(env, prop.ns, &val);
+    status = napi_create_double(env, prop.ns, &val);
     CHECK_STATUS;
     status = napi_set_property(env, obj, pro, val);
     CHECK_STATUS
     status = napi_create_string_utf8(env, "type", -1, &pro);
     CHECK_STATUS;
-    status = napi_create_number(env, prop.type, &val);
+    status = napi_create_double(env, prop.type, &val);
     CHECK_STATUS;
     status = napi_set_property(env, obj, pro, val);
     CHECK_STATUS
     status = napi_create_string_utf8(env, "unit", -1, &pro);
     CHECK_STATUS;
-    status = napi_create_number(env, prop.unit, &val);
+    status = napi_create_double(env, prop.unit, &val);
     CHECK_STATUS;
     status = napi_set_property(env, obj, pro, val);
     CHECK_STATUS
@@ -296,7 +296,7 @@ napi_value Symbol(napi_env env, napi_callback_info info) {
     napi_value val;
     status = napi_create_string_utf8(env, "value", -1, &pro);
     CHECK_STATUS;
-    status = napi_create_number(env, value, &val);
+    status = napi_create_double(env, value, &val);
     CHECK_STATUS;
     status = napi_set_property(env, obj, pro, val);
     CHECK_STATUS;
@@ -337,7 +337,7 @@ void Device(napi_env env, napi_callback_info info) {
 napi_value Errno(napi_env env, napi_callback_info info) {
   napi_status status;
   napi_value ret;
-  status = napi_create_number(env, nn_errno(), &ret);
+  status = napi_create_double(env, nn_errno(), &ret);
   CHECK_STATUS;
   return ret;
 }
@@ -388,7 +388,10 @@ public:
     s1 = _s1;
     s2 = _s2;
     err = 0;
-    status = napi_create_async_work(env, &NanomsgDeviceWorker::CallExecute, &NanomsgDeviceWorker::CallWorkComplete, this, &request);
+    napi_value resource_name;
+    napi_create_string_utf8(env, "NanomsgWorker", -1, &resource_name);
+    status = napi_create_async_work(env, nullptr, resource_name, &NanomsgDeviceWorker::CallExecute, &NanomsgDeviceWorker::CallWorkComplete, this, &request);
+    printf("%d\n", status);
     CHECK_STATUS;
   }
 
@@ -434,7 +437,7 @@ public:
     CHECK_STATUS;;
 
     napi_value argv[1];
-    status = napi_create_number(env, err, argv);
+    status = napi_create_double(env, err, argv);
     CHECK_STATUS;
 
     napi_value global;
@@ -443,7 +446,7 @@ public:
     napi_value fn;
     status = napi_get_reference_value(env, handle, &fn);
     napi_value result;
-    status = napi_make_callback(env, global, fn, 1, argv, &result);
+    status = napi_make_callback(env, nullptr, global, fn, 1, argv, &result);
     CHECK_STATUS;
     status = napi_close_handle_scope(env, scope);
     CHECK_STATUS;
@@ -456,7 +459,7 @@ public:
     CHECK_STATUS;;
 
     napi_value n;
-    status = napi_create_number(env, err, &n);
+    status = napi_create_double(env, err, &n);
     CHECK_STATUS;
     napi_value s;
     status = napi_coerce_to_string(env, n, &s);
@@ -472,7 +475,7 @@ public:
     napi_value fn;
     status = napi_get_reference_value(env, handle, &fn);
     napi_value result;
-    status = napi_make_callback(env, global, fn, 1, argv, &result);
+    status = napi_make_callback(env, nullptr, global, fn, 1, argv, &result);
     CHECK_STATUS;
 
     status = napi_close_handle_scope(env, scope);
@@ -524,13 +527,13 @@ napi_value DeviceWorker(napi_env env, napi_callback_info info) {
 #define EXPORT_METHOD(C, S)                                            \
   status = napi_create_string_utf8(env, #S, -1, &pro);                 \
   CHECK_STATUS;                                                        \
-  status = napi_create_function(env, #C, S, nullptr, &val);            \
+  status = napi_create_function(env, #C, -1, S, nullptr, &val);        \
   CHECK_STATUS;                                                        \
   status = napi_set_property(env, C, pro, val);                        \
   CHECK_STATUS;
 
 
-void InitAll(napi_env env, napi_value exports, napi_value module, void* priv) {
+napi_value InitAll(napi_env env, napi_value exports) {
   napi_status status;
   napi_handle_scope scope;
   status = napi_open_handle_scope(env, &scope);
@@ -569,7 +572,7 @@ void InitAll(napi_env env, napi_value exports, napi_value module, void* priv) {
     }
     status = napi_create_string_utf8(env, symbol_name, -1, &pro);
     CHECK_STATUS;
-    status = napi_create_number(env, value, &val);
+    status = napi_create_double(env, value, &val);
     CHECK_STATUS;
     status = napi_set_property(env, exports, pro, val);
     CHECK_STATUS;
@@ -577,6 +580,7 @@ void InitAll(napi_env env, napi_value exports, napi_value module, void* priv) {
 
   status = napi_close_handle_scope(env, scope);
   CHECK_STATUS;
+  return exports;
 }
 
 NAPI_MODULE(node_nanomsg, InitAll)

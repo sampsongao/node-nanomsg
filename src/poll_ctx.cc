@@ -37,7 +37,7 @@ void PollCtx::invoke_callback (napi_env env, const int events) const {
   CHECK_STATUS;
 
   napi_value argv[1];
-  status = napi_create_number(env, events, argv);
+  status = napi_create_double(env, events, argv);
   CHECK_STATUS;
   napi_value global;
   status = napi_get_global(env, &global);
@@ -45,7 +45,7 @@ void PollCtx::invoke_callback (napi_env env, const int events) const {
   napi_value fn;
   status = napi_get_reference_value(env, handle, &fn);
   napi_value result;
-  status = napi_make_callback(env, global, fn, 1, argv, &result);
+  status = napi_make_callback(env, nullptr, global, fn, 1, argv, &result);
   CHECK_STATUS;
 
   status = napi_close_handle_scope(env, scope);
