@@ -242,33 +242,33 @@ napi_value SymbolInfo(napi_env env, napi_callback_info info) {
     CHECK_STATUS;
     napi_value pro;
     napi_value val;
-    status = napi_create_string_utf8(env, "value", -1, &pro);
+    status = napi_create_string_utf8(env, "value", NAPI_AUTO_LENGTH, &pro);
     CHECK_STATUS;
     status = napi_create_double(env, prop.value, &val);
     CHECK_STATUS;
     status = napi_set_property(env, obj, pro, val);
     CHECK_STATUS
-    status = napi_create_string_utf8(env, "ns", -1, &pro);
+    status = napi_create_string_utf8(env, "ns", NAPI_AUTO_LENGTH, &pro);
     CHECK_STATUS;
     status = napi_create_double(env, prop.ns, &val);
     CHECK_STATUS;
     status = napi_set_property(env, obj, pro, val);
     CHECK_STATUS
-    status = napi_create_string_utf8(env, "type", -1, &pro);
+    status = napi_create_string_utf8(env, "type", NAPI_AUTO_LENGTH, &pro);
     CHECK_STATUS;
     status = napi_create_double(env, prop.type, &val);
     CHECK_STATUS;
     status = napi_set_property(env, obj, pro, val);
     CHECK_STATUS
-    status = napi_create_string_utf8(env, "unit", -1, &pro);
+    status = napi_create_string_utf8(env, "unit", NAPI_AUTO_LENGTH, &pro);
     CHECK_STATUS;
     status = napi_create_double(env, prop.unit, &val);
     CHECK_STATUS;
     status = napi_set_property(env, obj, pro, val);
     CHECK_STATUS
-    status = napi_create_string_utf8(env, "name", -1, &pro);
+    status = napi_create_string_utf8(env, "name", NAPI_AUTO_LENGTH, &pro);
     CHECK_STATUS;
-    status = napi_create_string_utf8(env, prop.name, -1, &val);
+    status = napi_create_string_utf8(env, prop.name, NAPI_AUTO_LENGTH, &val);
     CHECK_STATUS;
     status = napi_set_property(env, obj, pro, val);
     CHECK_STATUS
@@ -294,15 +294,15 @@ napi_value Symbol(napi_env env, napi_callback_info info) {
     CHECK_STATUS;
     napi_value pro;
     napi_value val;
-    status = napi_create_string_utf8(env, "value", -1, &pro);
+    status = napi_create_string_utf8(env, "value", NAPI_AUTO_LENGTH, &pro);
     CHECK_STATUS;
     status = napi_create_double(env, value, &val);
     CHECK_STATUS;
     status = napi_set_property(env, obj, pro, val);
     CHECK_STATUS;
-    status = napi_create_string_utf8(env, "name", -1, &pro);
+    status = napi_create_string_utf8(env, "name", NAPI_AUTO_LENGTH, &pro);
     CHECK_STATUS;
-    status = napi_create_string_utf8(env, ret, -1, &val);
+    status = napi_create_string_utf8(env, ret, NAPI_AUTO_LENGTH, &val);
     CHECK_STATUS;
     status = napi_set_property(env, obj, pro, val);
     CHECK_STATUS;
@@ -345,7 +345,7 @@ napi_value Errno(napi_env env, napi_callback_info info) {
 napi_value Err(napi_env env, napi_callback_info info) {
   napi_status status;
   napi_value str;
-  status = napi_create_string_utf8(env, (char*) nn_strerror(nn_errno()), -1, &str);
+  status = napi_create_string_utf8(env, (char*) nn_strerror(nn_errno()), NAPI_AUTO_LENGTH, &str);
   CHECK_STATUS;
   return str;
 }
@@ -389,7 +389,7 @@ public:
     s2 = _s2;
     err = 0;
     napi_value resource_name;
-    napi_create_string_utf8(env, "NanomsgWorker", -1, &resource_name);
+    napi_create_string_utf8(env, "NanomsgWorker", NAPI_AUTO_LENGTH, &resource_name);
     status = napi_create_async_work(env, nullptr, resource_name, &NanomsgDeviceWorker::CallExecute, &NanomsgDeviceWorker::CallWorkComplete, this, &request);
     printf("%d\n", status);
     CHECK_STATUS;
@@ -525,9 +525,10 @@ napi_value DeviceWorker(napi_env env, napi_callback_info info) {
 }
 
 #define EXPORT_METHOD(C, S)                                            \
-  status = napi_create_string_utf8(env, #S, -1, &pro);                 \
+  status = napi_create_string_utf8(env, #S, NAPI_AUTO_LENGTH, &pro);   \
   CHECK_STATUS;                                                        \
-  status = napi_create_function(env, #C, -1, S, nullptr, &val);        \
+  status = napi_create_function(                                       \
+      env, #C, NAPI_AUTO_LENGTH, S, nullptr, &val);                    \
   CHECK_STATUS;                                                        \
   status = napi_set_property(env, C, pro, val);                        \
   CHECK_STATUS;
@@ -570,7 +571,7 @@ napi_value InitAll(napi_env env, napi_value exports) {
     if (symbol_name == NULL) {
       break;
     }
-    status = napi_create_string_utf8(env, symbol_name, -1, &pro);
+    status = napi_create_string_utf8(env, symbol_name, NAPI_AUTO_LENGTH, &pro);
     CHECK_STATUS;
     status = napi_create_double(env, value, &val);
     CHECK_STATUS;
