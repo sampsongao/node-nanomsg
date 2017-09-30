@@ -246,7 +246,7 @@ void DeviceWorker(const Napi::CallbackInfo& info) {
     Napi::Function::New(env, S));
 
 
-void InitAll(Napi::Env env, Napi::Object exports, Napi::Object module) {
+Napi::Object InitAll(Napi::Env env, Napi::Object exports) {
   Napi::HandleScope scope(env);
 
   // Export functions.
@@ -279,6 +279,8 @@ void InitAll(Napi::Env env, Napi::Object exports, Napi::Object module) {
     }
     exports.Set(Napi::String::New(env, symbol_name), Napi::Number::New(env, value));
   }
+
+  return exports;
 }
 
 NODE_API_MODULE(node_nanomsg, InitAll)
