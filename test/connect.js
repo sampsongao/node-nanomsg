@@ -29,7 +29,9 @@ test('map connect address eid for valid IPC address', function (t) {
   }
 
   sock.close();
-  require('fs').unlink('some_address');
+  require('fs').unlink('some_address', function(err){
+    if (err) throw err;
+  });
 });
 
 test('map connect address eid for valid TCP address', function (t) {
